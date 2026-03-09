@@ -1,0 +1,43 @@
+# ── Environment variables (NEVER commit secrets) ──
+.env
+.env.local
+.env.production
+backend/.env
+frontend/.env
+
+# ── Python ──
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# ── Node ──
+node_modules/
+frontend/dist/
+frontend/.vite/
+
+# ── IDE ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Claude Code session data ──
+.claude/
+
+# ── Logs ──
+*.log
+npm-debug.log*
+
+# ── Test / Coverage ──
+.coverage
+htmlcov/
+.pytest_cache/
