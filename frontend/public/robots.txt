@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /resources
+Disallow: /connections
+Disallow: /alerts
+Disallow: /savings-report
+Disallow: /compare
+Disallow: /settings
+
+Sitemap: https://cloudbudgetmaster.com/sitemap.xml

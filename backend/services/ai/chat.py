@@ -22,7 +22,7 @@ def _build_system_prompt(context: dict) -> str:
                         f"${w.get('waste_monthly_cost_usd', 0):.2f}/mo wasted - {w.get('waste_reason', '')}")
         wasters_text = "\n".join(lines)
 
-    return f"""You are CloudPilot AI, a friendly cloud cost optimization assistant. You help users understand and reduce their cloud spending.
+    return f"""You are CloudBudgetMaster AI, a friendly cloud cost optimization assistant. You help users understand and reduce their cloud spending.
 
 USER'S CLOUD SUMMARY:
 - Total monthly cost: ${total_cost:.2f}

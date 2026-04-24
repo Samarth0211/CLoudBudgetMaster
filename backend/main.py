@@ -10,23 +10,29 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from backend.config import get_settings
-from backend.api import auth, connections, dashboard, resources, alerts, assistant
+from backend.api import auth, connections, dashboard, resources, alerts, assistant, payments
 
 settings = get_settings()
 
 app = FastAPI(
-    title="CloudPilot API",
+    title="CloudBudgetMaster API",
     version="0.1.0",
     docs_url="/docs" if settings.environment == "development" else None,
 )
 
 # CORS
+_origins = [
+    settings.frontend_url,
+    "http://localhost:5173",
+]
+# Allow any *.vercel.app origin in production
+if settings.environment == "production":
+    _origins.append("https://*.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        settings.frontend_url,
-        "http://localhost:5173",
-    ],
+    allow_origins=_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -39,6 +45,7 @@ app.include_router(dashboard.router, prefix="/v1")
 app.include_router(resources.router, prefix="/v1")
 app.include_router(alerts.router, prefix="/v1")
 app.include_router(assistant.router, prefix="/v1")
+app.include_router(payments.router, prefix="/v1")
 
 
 @app.exception_handler(Exception)

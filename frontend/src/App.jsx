@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Sidebar from './components/layout/Sidebar'
 import Navbar from './components/layout/Navbar'
+import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -10,23 +11,34 @@ import Resources from './pages/Resources'
 import Alerts from './pages/Alerts'
 import SavingsReport from './pages/SavingsReport'
 import Compare from './pages/Compare'
+import Pricing from './pages/Pricing'
+import Settings from './pages/Settings'
+import Blog from './pages/Blog'
+import BlogPost from './pages/BlogPost'
 import ChatWidget from './components/ChatWidget'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingSpinner from './components/shared/LoadingSpinner'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex min-h-screen items-center justify-center"><LoadingSpinner size="lg" /></div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B0F1A]"><LoadingSpinner size="lg" /></div>
   if (!user) return <Navigate to="/login" replace />
+  return children
+}
+
+function PublicRoute({ children }) {
+  const { user, loading } = useAuth()
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B0F1A]"><LoadingSpinner size="lg" /></div>
+  if (user) return <Navigate to="/dashboard" replace />
   return children
 }
 
 function AppLayout({ children }) {
   return (
-    <div className="min-h-screen bg-[#0B0F1A]">
+    <div className="min-h-screen bg-[#0a0a0a]">
       <Sidebar />
       <Navbar />
-      <main className="ml-64 pt-16 p-6">
+      <main className="ml-60 pt-14 p-6">
         {children}
       </main>
       <ChatWidget />
@@ -38,8 +50,9 @@ function AppLayout({ children }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <AppLayout><Dashboard /></AppLayout>
@@ -70,13 +83,15 @@ export default function App() {
           <AppLayout><Compare /></AppLayout>
         </ProtectedRoute>
       } />
+      <Route path="/pricing" element={<Pricing />} />
+      <Route path="/blog" element={<Blog />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
       <Route path="/settings" element={
         <ProtectedRoute>
-          <AppLayout><div className="text-slate-500">Settings — coming soon</div></AppLayout>
+          <AppLayout><Settings /></AppLayout>
         </ProtectedRoute>
       } />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }

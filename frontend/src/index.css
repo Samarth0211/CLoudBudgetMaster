@@ -1,104 +1,102 @@
 @import "tailwindcss";
 
-/* ── Animated Gradients ── */
-@keyframes gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+html {
+  scroll-behavior: smooth;
 }
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+::selection {
+  background: rgba(99, 102, 241, 0.25);
+  color: white;
 }
-@keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 8px rgba(244, 63, 94, 0.15), 0 0 0 0 rgba(244, 63, 94, 0); }
-  50% { box-shadow: 0 0 16px rgba(244, 63, 94, 0.25), 0 0 30px rgba(244, 63, 94, 0.08); }
-}
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
+
+/* ── Entry animations (used across pages) ── */
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes scale-in {
-  from { opacity: 0; transform: scale(0.92); }
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 @keyframes slide-in-right {
-  from { opacity: 0; transform: translateX(16px); }
+  from { opacity: 0; transform: translateX(12px); }
   to { opacity: 1; transform: translateX(0); }
 }
 @keyframes slide-down {
-  from { opacity: 0; transform: translateY(-10px); }
+  from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
-}
-@keyframes number-in {
-  0% { opacity: 0; transform: translateY(10px) scale(0.9); }
-  60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
-  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 @keyframes ring-fill {
   from { stroke-dashoffset: 327; }
 }
-@keyframes blob {
-  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
-  50% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
-}
 
-.animate-gradient { background-size: 200% 200%; animation: gradient-shift 8s ease infinite; }
-.animate-float { animation: float 4s ease-in-out infinite; }
-.animate-pulse-glow { animation: pulse-glow 2.5s ease-in-out infinite; }
-.animate-fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-scale-in { animation: scale-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-slide-in { animation: slide-in-right 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-slide-down { animation: slide-down 0.3s ease-out both; }
-.animate-number { animation: number-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-blob { animation: blob 8s ease-in-out infinite; }
+.animate-fade-up { animation: fade-up 0.4s ease-out both; }
+.animate-scale-in { animation: scale-in 0.3s ease-out both; }
+.animate-slide-in { animation: slide-in-right 0.3s ease-out both; }
+.animate-slide-down { animation: slide-down 0.2s ease-out both; }
 
-/* Staggered entries */
-.delay-1 { animation-delay: 0.08s; }
-.delay-2 { animation-delay: 0.16s; }
-.delay-3 { animation-delay: 0.24s; }
-.delay-4 { animation-delay: 0.32s; }
-.delay-5 { animation-delay: 0.4s; }
+.delay-1 { animation-delay: 0.05s; }
+.delay-2 { animation-delay: 0.1s; }
+.delay-3 { animation-delay: 0.15s; }
+.delay-4 { animation-delay: 0.2s; }
+.delay-5 { animation-delay: 0.25s; }
 
-/* Glassmorphism */
-.glass {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+/* Auth animated background */
+@keyframes grid-move {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(40px, 40px); }
 }
-.glass-dark {
-  background: rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+@keyframes glow-drift {
+  0% { transform: translate(-10%, -10%); opacity: 0.5; }
+  33% { transform: translate(10%, -5%); opacity: 0.8; }
+  66% { transform: translate(-5%, 10%); opacity: 0.6; }
+  100% { transform: translate(-10%, -10%); opacity: 0.5; }
 }
-
-/* Shimmer overlay on hover */
-.shimmer-hover {
-  position: relative;
-  overflow: hidden;
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -20px) scale(1.1); }
 }
-.shimmer-hover::after {
-  content: '';
+.auth-grid {
+  background-image: radial-gradient(circle, rgba(99, 102, 241, 0.15) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: grid-move 6s linear infinite;
+}
+.auth-glow {
+  background: radial-gradient(ellipse 600px 400px at 50% 40%, rgba(99, 102, 241, 0.12) 0%, transparent 70%);
+  animation: glow-drift 10s ease-in-out infinite;
+}
+.auth-orb-1 {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
-  transform: translateX(-100%);
-  transition: none;
-  pointer-events: none;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  top: 10%;
+  right: 10%;
+  animation: orb-float 8s ease-in-out infinite;
 }
-.shimmer-hover:hover::after {
-  animation: shimmer 0.6s ease-out;
+.auth-orb-2 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.06) 0%, transparent 70%);
+  bottom: 15%;
+  left: 15%;
+  animation: orb-float 12s ease-in-out infinite reverse;
 }
 
-/* Donut ring animation */
+/* Donut chart animation */
 .donut-animate {
-  animation: ring-fill 1.2s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: ring-fill 1s ease-out both;
 }
 
-/* Print styles for savings report */
+/* Print styles */
 @media print {
   body { background: white !important; color: black !important; }
   .print\:hidden, aside, header, .fixed { display: none !important; }
@@ -106,15 +104,4 @@
   .print\:bg-white { background: white !important; }
   .print\:text-black { color: black !important; }
   .print\:border-gray-200 { border-color: #e5e7eb !important; }
-}
-
-/* Noise texture overlay */
-.noise::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  pointer-events: none;
-  border-radius: inherit;
 }

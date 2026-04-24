@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 
 const STEPS = [
   {
-    title: 'Welcome to CloudPilot!',
+    title: 'Welcome to CloudBudgetMaster!',
     description: 'Your cloud cost monitoring assistant. Let me show you around.',
     target: null, // center screen
   },

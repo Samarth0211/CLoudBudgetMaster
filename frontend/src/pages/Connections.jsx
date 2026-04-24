@@ -4,8 +4,8 @@ import api from '../lib/api'
 const PROVIDERS = [
   { id: 'aws', name: 'Amazon Web Services', shortName: 'AWS', color: 'from-orange-500 to-amber-500', icon: AwsIcon },
   { id: 'gcp', name: 'Google Cloud Platform', shortName: 'GCP', color: 'from-blue-500 to-cyan-500', icon: GcpIcon },
-  { id: 'azure', name: 'Microsoft Azure', shortName: 'Azure', color: 'from-sky-500 to-blue-600', icon: AzureIcon },
-  { id: 'snowflake', name: 'Snowflake', shortName: 'Snowflake', color: 'from-cyan-400 to-blue-500', icon: SnowflakeIcon },
+  { id: 'azure', name: 'Microsoft Azure', shortName: 'Azure', color: 'from-sky-500 to-blue-600', icon: AzureIcon, comingSoon: true },
+  { id: 'snowflake', name: 'Snowflake', shortName: 'Snowflake', color: 'from-cyan-400 to-blue-500', icon: SnowflakeIcon, comingSoon: true },
 ]
 
 const CREDENTIAL_FIELDS = {
@@ -277,9 +277,12 @@ function AddConnectionModal({ onClose, onAdded }) {
               {PROVIDERS.map(p => {
                 const Icon = p.icon
                 return (
-                  <button key={p.id} onClick={() => selectProvider(p)}
-                    className="flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 p-5 text-center hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all duration-300 group">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${p.color} text-white shadow-lg group-hover:scale-110 transition-transform`}>
+                  <button key={p.id} onClick={() => !p.comingSoon && selectProvider(p)} disabled={p.comingSoon}
+                    className={`relative flex flex-col items-center gap-3 rounded-2xl border-2 border-white/10 p-5 text-center transition-all duration-300 group ${p.comingSoon ? 'opacity-50 cursor-not-allowed' : 'hover:border-indigo-500/40 hover:bg-indigo-500/5'}`}>
+                    {p.comingSoon && (
+                      <span className="absolute top-2 right-2 rounded bg-slate-700 px-1.5 py-0.5 text-[10px] font-medium text-slate-300">Soon</span>
+                    )}
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${p.color} text-white shadow-lg ${!p.comingSoon ? 'group-hover:scale-110' : ''} transition-transform`}>
                       <Icon />
                     </div>
                     <div>
