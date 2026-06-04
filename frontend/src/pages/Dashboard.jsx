@@ -191,7 +191,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
             {/* Spending chart */}
-            <div className="lg:col-span-2 rounded-lg border border-slate-800 bg-slate-900 p-5">
+            <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-[#111827] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-slate-200">Daily spending</h3>
                 {selectedDate && (
@@ -239,7 +239,7 @@ export default function Dashboard() {
             {/* Right column */}
             <div className="space-y-3">
               {ok && (
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-5">
+                <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
                   <h3 className="text-sm font-medium text-slate-200 mb-4">Waste overview</h3>
 
                   <div className="flex justify-center">
@@ -252,7 +252,7 @@ export default function Dashboard() {
                           strokeDasharray={`${(summary.waste_percentage / 100) * 314} 314`} className="donut-animate" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-semibold text-white">{summary.waste_percentage}%</span>
+                        <span className="font-mono text-2xl font-semibold text-white">{summary.waste_percentage}%</span>
                         <span className="text-[11px] text-slate-500">wasted</span>
                       </div>
                     </div>
@@ -260,18 +260,18 @@ export default function Dashboard() {
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <div className="rounded-lg bg-slate-800/50 p-2.5 text-center">
-                      <p className="text-sm font-semibold text-white">${summary.total_waste_cost_usd.toLocaleString()}</p>
+                      <p className="font-mono text-sm font-semibold text-white">${summary.total_waste_cost_usd.toLocaleString()}</p>
                       <p className="text-[11px] text-slate-500">saveable</p>
                     </div>
                     <div className="rounded-lg bg-slate-800/50 p-2.5 text-center">
-                      <p className="text-sm font-semibold text-white">{summary.unused_resources}</p>
+                      <p className="font-mono text-sm font-semibold text-white">{summary.unused_resources}</p>
                       <p className="text-[11px] text-slate-500">unused</p>
                     </div>
                   </div>
                 </div>
               )}
 
-              <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+              <div className="rounded-xl border border-slate-800 bg-[#111827] p-4">
                 <p className="text-xs font-medium text-slate-500 mb-2.5">Quick actions</p>
                 <div className="space-y-1.5">
                   <button onClick={() => navigate('/resources')}
@@ -291,7 +291,7 @@ export default function Dashboard() {
 
           {/* ── Day breakdown ── */}
           {selectedDate && (
-            <div className="rounded-lg border border-slate-800 bg-slate-900 p-5 animate-scale-in">
+            <div className="rounded-xl border border-slate-800 bg-[#111827] p-5 animate-scale-in">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="text-sm font-medium text-slate-200">
@@ -299,7 +299,7 @@ export default function Dashboard() {
                   </h3>
                   {dayBreakdown && (
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-slate-400">Total: <span className="text-white font-medium">${dayBreakdown.total.toFixed(2)}</span></span>
+                      <span className="text-xs text-slate-400">Total: <span className="font-mono text-white font-medium">${dayBreakdown.total.toFixed(2)}</span></span>
                       {dayBreakdown.previous_day_total > 0 && (() => {
                         const diff = dayBreakdown.total - dayBreakdown.previous_day_total
                         const up = diff > 0
@@ -391,12 +391,12 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 {topWaste.map((r, i) => (
                   <div key={r.id || i} onClick={() => navigate('/resources')}
-                    className="group rounded-lg border border-slate-800 bg-slate-900 p-4 cursor-pointer hover:border-slate-700 transition-colors">
+                    className="group rounded-xl border border-slate-800 bg-[#111827] p-4 cursor-pointer hover:border-slate-700 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-semibold text-slate-400 bg-slate-800">
                         {i + 1}
                       </span>
-                      <span className="text-xs font-medium text-red-400">${(r.waste_monthly_cost_usd || 0).toFixed(0)}/mo</span>
+                      <span className="font-mono text-xs font-medium text-red-400">${(r.waste_monthly_cost_usd || 0).toFixed(0)}/mo</span>
                     </div>
 
                     <p className="text-sm font-medium text-white truncate">{r.resource_name}</p>
@@ -425,9 +425,9 @@ export default function Dashboard() {
 /* ── Stat card ── */
 function StatCard({ label, value, change, sub, warn }) {
   return (
-    <div className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+    <div className="rounded-xl border border-slate-800 bg-[#111827] p-4">
       <p className="text-xs text-slate-500 mb-1">{label}</p>
-      <p className="text-2xl font-semibold text-white">{value}</p>
+      <p className="font-mono text-2xl font-semibold tracking-tight text-white">{value}</p>
       <div className="mt-1">
         {change != null ? (
           <span className={`text-xs font-medium ${change > 0 ? 'text-red-400' : 'text-emerald-400'}`}>

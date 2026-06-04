@@ -35,7 +35,7 @@ export default function Blog() {
         <div className="space-y-4">
           {BLOGS.map((post) => (
             <Link key={post.slug} to={`/blog/${post.slug}`}
-              className="block rounded-lg border border-slate-800 bg-slate-900 p-5 hover:border-slate-700 transition-colors group">
+              className="block rounded-xl border border-slate-800 bg-[#111827] p-5 hover:border-slate-700 transition-colors group">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">

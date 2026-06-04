@@ -229,7 +229,7 @@ export default function LandingPage() {
                   ].map((s, i) => (
                     <div key={i} className="rounded-xl bg-white/5 border border-white/5 p-4">
                       <p className="text-[11px] text-slate-500 uppercase tracking-wide">{s.label}</p>
-                      <p className="mt-1 text-xl font-bold text-white">{s.value}</p>
+                      <p className="font-mono mt-1 text-xl font-bold text-white">{s.value}</p>
                       <p className={`mt-0.5 text-xs ${s.down ? 'text-emerald-400' : 'text-slate-500'}`}>{s.change}</p>
                     </div>
                   ))}
@@ -254,7 +254,7 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {STATS.map((s, i) => (
               <div key={i} className="text-center">
-                <p className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">{s.value}</p>
+                <p className="font-mono text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-400 to-violet-400 bg-clip-text text-transparent">{s.value}</p>
                 <p className="mt-1 text-sm text-slate-500">{s.label}</p>
               </div>
             ))}
@@ -370,7 +370,7 @@ export default function LandingPage() {
 
                 <h3 className="text-lg font-semibold text-white">{tier.name}</h3>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">{tier.price}</span>
+                  <span className="font-mono text-4xl font-bold text-white">{tier.price}</span>
                   {tier.period && <span className="text-sm text-slate-500">{tier.period}</span>}
                 </div>
                 <p className="mt-3 text-sm text-slate-400">{tier.desc}</p>

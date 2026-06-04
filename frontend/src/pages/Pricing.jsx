@@ -158,8 +158,8 @@ export default function Pricing() {
               <div className="mb-5">
                 <h3 className="text-sm font-semibold text-white">{plan.name}</h3>
                 <div className="mt-3 flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-white">{plan.price}</span>
-                  {plan.period && <span className="text-sm text-slate-500">{plan.period}</span>}
+                  <span className="font-mono text-4xl font-bold text-white">{plan.price}</span>
+                  {plan.period && <span className="font-mono text-sm text-slate-500">{plan.period}</span>}
                 </div>
                 <p className="mt-2 text-xs text-slate-400 leading-relaxed">{plan.desc}</p>
               </div>
@@ -223,7 +223,7 @@ export default function Pricing() {
       </div>
 
       {/* Promo code */}
-      <div className="mt-8 rounded-lg border border-slate-800 bg-slate-900 p-5">
+      <div className="mt-8 rounded-xl border border-slate-800 bg-[#111827] p-5">
         <p className="text-sm font-medium text-white mb-3">Have a promo code?</p>
         <form onSubmit={handlePromo} className="flex gap-2">
           <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value)}
@@ -240,7 +240,7 @@ export default function Pricing() {
       </div>
 
       {/* Trust bar */}
-      <div className="mt-10 rounded-lg border border-slate-800 bg-slate-900 p-5">
+      <div className="mt-10 rounded-xl border border-slate-800 bg-[#111827] p-5">
         <div className="flex flex-wrap items-center justify-center gap-8">
           <div className="flex items-center gap-2">
             <svg className="h-5 w-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -283,7 +283,7 @@ export default function Pricing() {
             { q: 'What happens when I hit my chat limit?', a: 'You can still use all other features. Upgrade to unlock more AI conversations.' },
             { q: 'Can I cancel anytime?', a: 'Yes, cancel from your Settings page. Your plan stays active until the end of the billing period.' },
           ].map((faq, i) => (
-            <div key={i} className="rounded-lg border border-slate-800 bg-slate-900 p-4">
+            <div key={i} className="rounded-xl border border-slate-800 bg-[#111827] p-4">
               <p className="text-xs font-medium text-white">{faq.q}</p>
               <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">{faq.a}</p>
             </div>

@@ -79,7 +79,7 @@ export default function Settings() {
       </div>
 
       {/* Profile */}
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-5 mb-4">
+      <section className="rounded-xl border border-slate-800 bg-[#111827] p-5 mb-4">
         <h2 className="text-sm font-medium text-white mb-4">Profile</h2>
         <div className="space-y-4">
           <div className="flex items-center gap-4 mb-4">
@@ -117,7 +117,7 @@ export default function Settings() {
       </section>
 
       {/* Change Password */}
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-5 mb-4">
+      <section className="rounded-xl border border-slate-800 bg-[#111827] p-5 mb-4">
         <h2 className="text-sm font-medium text-white mb-4">Change password</h2>
         <form onSubmit={handleChangePassword} className="space-y-3">
           {pwError && <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-2.5 text-xs text-red-300">{pwError}</div>}
@@ -147,7 +147,7 @@ export default function Settings() {
       </section>
 
       {/* Plan */}
-      <section className="rounded-lg border border-slate-800 bg-slate-900 p-5 mb-4">
+      <section className="rounded-xl border border-slate-800 bg-[#111827] p-5 mb-4">
         <h2 className="text-sm font-medium text-white mb-2">Subscription</h2>
         <div className="flex items-center justify-between">
           <div>

@@ -94,8 +94,8 @@ export default function Resources() {
         <h1 className="text-2xl font-bold text-white">Resources</h1>
         <p className="mt-1 text-sm text-slate-400">
           {total} resources found
-          {totalMonthlyCost > 0 && <span> &middot; <span className="text-white font-medium">${totalMonthlyCost.toFixed(0)}/mo</span> total cost</span>}
-          {totalWaste > 0 && <span> &middot; <span className="text-red-400 font-medium">${totalWaste.toFixed(0)}/mo</span> potential savings</span>}
+          {totalMonthlyCost > 0 && <span> &middot; <span className="font-mono text-white font-medium">${totalMonthlyCost.toFixed(0)}/mo</span> total cost</span>}
+          {totalWaste > 0 && <span> &middot; <span className="font-mono text-red-400 font-medium">${totalWaste.toFixed(0)}/mo</span> potential savings</span>}
         </p>
       </div>
 
@@ -222,13 +222,13 @@ export default function Resources() {
 
                     {/* Cost columns */}
                     <div className="text-right shrink-0 w-24">
-                      <p className="text-sm font-semibold text-white">${(r.monthly_cost_usd || 0).toFixed(2)}</p>
+                      <p className="font-mono text-sm font-semibold text-white">${(r.monthly_cost_usd || 0).toFixed(2)}</p>
                       <p className="text-xs text-slate-500">monthly</p>
                     </div>
 
                     {isWaste && (
                       <div className="text-right shrink-0 w-24">
-                        <p className="text-sm font-bold text-red-400">${(r.waste_monthly_cost_usd || 0).toFixed(2)}</p>
+                        <p className="font-mono text-sm font-bold text-red-400">${(r.waste_monthly_cost_usd || 0).toFixed(2)}</p>
                         <p className="text-xs text-red-500/60">wasted</p>
                       </div>
                     )}

@@ -72,7 +72,7 @@ export default function BlogPost() {
         </article>
 
         {/* CTA */}
-        <div className="mt-12 rounded-lg border border-slate-800 bg-slate-900 p-6 text-center">
+        <div className="mt-12 rounded-xl border border-slate-800 bg-[#111827] p-6 text-center">
           <h3 className="text-base font-semibold text-white">Stop guessing where your cloud money goes</h3>
           <p className="text-sm text-slate-400 mt-1.5">CloudBudgetMaster scans your cloud accounts and finds waste automatically.</p>
           <Link to="/register" className="mt-4 inline-flex rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors">

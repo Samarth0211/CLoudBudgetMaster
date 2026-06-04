@@ -75,7 +75,7 @@ export default function SavingsReport() {
             <div className="space-y-3">
               {wasters.map((w, i) => (
                 <div key={w.id} className="flex items-center gap-3">
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-xs font-bold text-slate-400 print:bg-gray-100 print:text-gray-600">
+                  <span className="font-mono flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/5 text-xs font-bold text-slate-400 print:bg-gray-100 print:text-gray-600">
                     {i + 1}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -85,7 +85,7 @@ export default function SavingsReport() {
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-sm font-bold text-red-400 print:text-red-600">${(w.waste_monthly_cost_usd || 0).toFixed(2)}/mo</p>
+                    <p className="font-mono text-sm font-bold text-red-400 print:text-red-600">${(w.waste_monthly_cost_usd || 0).toFixed(2)}/mo</p>
                   </div>
                   {/* Visual bar */}
                   <div className="w-24 shrink-0 hidden md:block">
@@ -163,7 +163,7 @@ function SummaryCard({ label, value, color }) {
   return (
     <div className="rounded-xl bg-white/5 p-4 print:bg-gray-50 print:border print:border-gray-200">
       <p className="text-xs text-slate-500 mb-1 print:text-gray-500">{label}</p>
-      <p className={`text-xl font-bold ${color}`}>{value}</p>
+      <p className={`font-mono text-xl font-bold ${color}`}>{value}</p>
     </div>
   )
 }
