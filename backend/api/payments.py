@@ -1,10 +1,12 @@
 import httpx
 from datetime import date
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from backend.config import get_settings
 from backend.dependencies import get_current_user
 from backend.db.client import get_supabase
+from backend.core.rate_limit import limiter
+from backend.core.payment_store import record_order, get_order, mark_captured
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 
@@ -13,8 +15,8 @@ PLAN_PRICES = {
 }
 
 PROMO_CODES = {
-    "PRODUCTHUNT": {"plan": "pro", "duration_days": 30, "expires": date(2026, 4, 24)},
-    "SAASHIVE": {"plan": "pro", "duration_days": 30, "expires": date(2026, 4, 30)},
+    "PRODUCTHUNT": {"plan": "pro", "duration_days": 30, "expires": date(2026, 12, 31)},
+    "SAASHIVE": {"plan": "pro", "duration_days": 30, "expires": date(2026, 12, 31)},
 }
 
 
@@ -45,7 +47,8 @@ class CreateOrderResponse(BaseModel):
 
 
 @router.post("/create-order", response_model=CreateOrderResponse)
-async def create_order(user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def create_order(request: Request, user=Depends(get_current_user)):
     """Create a PayPal order for Pro plan upgrade."""
     if user.get("plan") == "pro":
         raise HTTPException(status_code=400, detail="You are already on the Pro plan")
@@ -90,6 +93,10 @@ async def create_order(user=Depends(get_current_user)):
     if not approval_link:
         raise HTTPException(status_code=502, detail="No approval URL returned from PayPal")
 
+    # Remember which user this order is for + the expected amount, so capture can
+    # verify it instead of trusting any completed order id.
+    record_order(data["id"], user["id"], "pro", plan["amount"], plan["currency"])
+
     return CreateOrderResponse(order_id=data["id"], approval_url=approval_link)
 
 
@@ -98,17 +105,22 @@ class CaptureRequest(BaseModel):
 
 
 @router.post("/capture-order")
-async def capture_order(body: CaptureRequest, user=Depends(get_current_user)):
-    """Capture a PayPal order after user approval and upgrade to Pro."""
-    token = await _get_paypal_token()
+@limiter.limit("10/minute")
+async def capture_order(request: Request, body: CaptureRequest, user=Depends(get_current_user)):
+    """Capture a PayPal order, verifying it belongs to this user, then upgrade."""
+    # 1. The order must be one WE created for THIS user.
+    order = get_order(body.order_id)
+    if not order or order["user_id"] != user["id"]:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order["status"] == "captured":
+        # Idempotent — already processed (e.g. a page refresh). Don't double-capture.
+        return {"status": "success", "plan": order["plan"], "paypal_order_id": body.order_id, "already_processed": True}
 
+    token = await _get_paypal_token()
     async with httpx.AsyncClient() as client:
         resp = await client.post(
             f"{_paypal_base_url()}/v2/checkout/orders/{body.order_id}/capture",
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
         )
 
     if resp.status_code not in (200, 201):
@@ -118,15 +130,21 @@ async def capture_order(body: CaptureRequest, user=Depends(get_current_user)):
     if data.get("status") != "COMPLETED":
         raise HTTPException(status_code=400, detail=f"Payment not completed. Status: {data.get('status')}")
 
-    # Upgrade user to Pro
+    # 2. Verify the captured custom_id, amount, and currency match what we recorded.
+    pu = (data.get("purchase_units") or [{}])[0]
+    if pu.get("custom_id") and pu.get("custom_id") != user["id"]:
+        raise HTTPException(status_code=403, detail="This order does not belong to you")
+    cap = ((pu.get("payments") or {}).get("captures") or [{}])[0]
+    amt = cap.get("amount", {})
+    if amt.get("value") != order["amount"] or amt.get("currency_code") != order["currency"]:
+        raise HTTPException(status_code=400, detail="Payment amount mismatch")
+
+    # 3. All good — mark captured (prevents replay) and upgrade.
+    mark_captured(body.order_id)
     supabase = get_supabase()
     supabase.table("profiles").update({"plan": "pro"}).eq("id", user["id"]).execute()
 
-    return {
-        "status": "success",
-        "plan": "pro",
-        "paypal_order_id": data["id"],
-    }
+    return {"status": "success", "plan": "pro", "paypal_order_id": data["id"]}
 
 
 class PromoCodeRequest(BaseModel):
@@ -134,7 +152,8 @@ class PromoCodeRequest(BaseModel):
 
 
 @router.post("/redeem-promo")
-async def redeem_promo(body: PromoCodeRequest, user=Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def redeem_promo(request: Request, body: PromoCodeRequest, user=Depends(get_current_user)):
     """Redeem a promo code for free Pro access."""
     if user.get("plan") == "pro":
         raise HTTPException(status_code=400, detail="You are already on the Pro plan")
