@@ -14,6 +14,16 @@ const MARGIN = 40
 const money = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const money0 = (n) => `$${Math.round(Number(n || 0)).toLocaleString()}`
 
+// jsPDF's built-in Helvetica only supports WinAnsi. Characters like the
+// non-breaking hyphen (U+2011), en/em dashes, and curly quotes (which the AI
+// model emits) break glyph rendering — the line gets letter-spaced and overflows
+// the margin. Strip everything to ASCII before drawing.
+const clean = (s) => String(s ?? '')
+  .replace(/[‘’ʼ]/g, "'").replace(/[“”]/g, '"')
+  .replace(/[‐‑]/g, '-').replace(/[‒–—―]/g, '-')
+  .replace(/…/g, '...').replace(/[    ]/g, ' ')
+  .replace(/[•·]/g, '-').replace(/[^\x20-\x7E]/g, '')
+
 const TYPE_LABEL = {
   ec2_instance: 'EC2 Instance', rds_instance: 'RDS Database', ebs_volume: 'EBS Volume',
   elastic_ip: 'Elastic IP', s3_bucket: 'S3 Bucket', compute_instance: 'Compute VM', persistent_disk: 'Persistent Disk',
@@ -72,7 +82,8 @@ function rankedBars(ctx, items, color) {
   items.forEach((it) => {
     const labelW = 120, barX = MARGIN + labelW, barW = W - 2 * MARGIN - labelW - 110
     doc.setFontSize(8.5); doc.setTextColor(60, 60, 60); doc.setFont('helvetica', 'normal')
-    const lbl = it.label.length > 24 ? it.label.slice(0, 23) + '…' : it.label
+    const lbl0 = clean(it.label)
+    const lbl = lbl0.length > 24 ? lbl0.slice(0, 23) + '..' : lbl0
     doc.text(lbl, MARGIN, ctx.y + 8)
     doc.setFillColor(238, 240, 243); doc.rect(barX, ctx.y, barW, 8, 'F')
     doc.setFillColor(...color); doc.rect(barX, ctx.y, Math.max((it.value / max) * barW, 1), 8, 'F')
@@ -128,7 +139,7 @@ export async function generateCostReport({ summary, trend = [], connections = []
   doc.text('CloudBudgetMaster', W / 2, 205, { align: 'center' })
   doc.setFontSize(28); doc.text('Cloud Cost & Savings Report', W / 2, 270, { align: 'center' })
   doc.setFont('helvetica', 'normal'); doc.setFontSize(12); doc.setTextColor(255, 172, 49)
-  doc.text(`Prepared for ${account || 'your organization'}`, W / 2, 298, { align: 'center' })
+  doc.text(`Prepared for ${clean(account) || 'your organization'}`, W / 2, 298, { align: 'center' })
   doc.setTextColor(180, 188, 200); doc.setFontSize(10)
   doc.text(`Reporting period: last 30 days  ·  Generated ${fmtDate}`, W / 2, 318, { align: 'center' })
   doc.text(`${connections.length} connection${connections.length === 1 ? '' : 's'}  ·  ${totalRes} resources`, W / 2, 334, { align: 'center' })
@@ -188,7 +199,7 @@ export async function generateCostReport({ summary, trend = [], connections = []
     ctx.y += 16
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(70, 70, 70)
     insights.executive_summary.split(/\n{2,}/).forEach(p => {
-      const pl = doc.splitTextToSize(p.trim(), W - 2 * MARGIN)
+      const pl = doc.splitTextToSize(clean(p), W - 2 * MARGIN)
       ensure(ctx, pl.length * 13 + 8)
       doc.text(pl, MARGIN, ctx.y); ctx.y += pl.length * 13 + 8
     })
@@ -221,7 +232,7 @@ export async function generateCostReport({ summary, trend = [], connections = []
     autoTable(doc, {
       startY: ctx.y,
       head: [['#', 'Resource', 'Type', 'Region', 'Monthly']],
-      body: topCost.map((r, i) => [i + 1, r.resource_name || r.resource_id || '—', typeLabel(r.resource_type), r.region || '', money(r.monthly_cost_usd)]),
+      body: topCost.map((r, i) => [i + 1, clean(r.resource_name || r.resource_id || '-'), clean(typeLabel(r.resource_type)), clean(r.region || ''), money(r.monthly_cost_usd)]),
       styles: { fontSize: 8.5, cellPadding: 5, textColor: [45, 45, 45], lineColor: [236, 236, 236], lineWidth: 0.5 },
       headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [249, 250, 251] },
@@ -237,12 +248,12 @@ export async function generateCostReport({ summary, trend = [], connections = []
     insights.suggestions.forEach((s, i) => {
       ensure(ctx, 46)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK)
-      const head = `${i + 1}. ${s.title}` + (s.monthly_savings > 0 ? `   (~${money(s.monthly_savings)}/mo)` : '')
+      const head = `${i + 1}. ${clean(s.title)}` + (s.monthly_savings > 0 ? `   (~${money(s.monthly_savings)}/mo)` : '')
       const hl = doc.splitTextToSize(head, W - 2 * MARGIN)
       doc.text(hl, MARGIN, ctx.y); ctx.y += hl.length * 13 + 2
       if (s.detail) {
         doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(70, 70, 70)
-        const dl = doc.splitTextToSize(s.detail, W - 2 * MARGIN - 8)
+        const dl = doc.splitTextToSize(clean(s.detail), W - 2 * MARGIN - 8)
         doc.text(dl, MARGIN + 8, ctx.y); ctx.y += dl.length * 11 + 10
       }
     })
@@ -254,10 +265,10 @@ export async function generateCostReport({ summary, trend = [], connections = []
     insights.faq.forEach((f) => {
       ensure(ctx, 44)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK)
-      const ql = doc.splitTextToSize(`Q.  ${f.q}`, W - 2 * MARGIN)
+      const ql = doc.splitTextToSize(`Q.  ${clean(f.q)}`, W - 2 * MARGIN)
       doc.text(ql, MARGIN, ctx.y); ctx.y += ql.length * 12 + 3
       doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(70, 70, 70)
-      const al = doc.splitTextToSize(f.a, W - 2 * MARGIN - 8)
+      const al = doc.splitTextToSize(clean(f.a), W - 2 * MARGIN - 8)
       doc.text(al, MARGIN + 8, ctx.y); ctx.y += al.length * 12 + 14
     })
   }
@@ -270,7 +281,7 @@ export async function generateCostReport({ summary, trend = [], connections = []
     const cost = rs.reduce((s, r) => s + (r.monthly_cost_usd || 0), 0)
     const w = rs.reduce((s, r) => s + (r.waste_monthly_cost_usd || 0), 0)
     const wasted = rs.filter(r => r.waste_status && r.waste_status !== 'active').length
-    sectionTitle(ctx, `Connection — ${conn.display_name || conn.provider}`, null, true)
+    sectionTitle(ctx, clean(`Connection - ${conn.display_name || conn.provider}`), null, true)
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90)
     doc.text([`Provider: ${(conn.provider || '').toUpperCase()}`, `Resources: ${rs.length}`, `Idle/unused: ${wasted}`, `Monthly: ${money(cost)}`, `Waste: ${money(w)}`].join('     '), MARGIN, ctx.y)
     ctx.y += 16
@@ -278,7 +289,7 @@ export async function generateCostReport({ summary, trend = [], connections = []
       autoTable(doc, {
         startY: ctx.y,
         head: [['#', 'Resource', 'Type', 'Region', 'State', 'Monthly', 'Waste']],
-        body: rs.map((r, i) => [i + 1, r.resource_name || r.resource_id || '—', typeLabel(r.resource_type), r.region || '', r.status || '', money(r.monthly_cost_usd), r.waste_status && r.waste_status !== 'active' ? money(r.waste_monthly_cost_usd) : '—']),
+        body: rs.map((r, i) => [i + 1, clean(r.resource_name || r.resource_id || '-'), clean(typeLabel(r.resource_type)), clean(r.region || ''), clean(r.status || ''), money(r.monthly_cost_usd), r.waste_status && r.waste_status !== 'active' ? money(r.waste_monthly_cost_usd) : '-']),
         styles: { fontSize: 8, cellPadding: 4, textColor: [45, 45, 45], lineColor: [236, 236, 236], lineWidth: 0.5, overflow: 'ellipsize' },
         headStyles: { fillColor: NAVY, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
         alternateRowStyles: { fillColor: [249, 250, 251] },
@@ -297,9 +308,9 @@ export async function generateCostReport({ summary, trend = [], connections = []
     wastedRes.slice(0, 40).forEach((r, i) => {
       ensure(ctx, 40)
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(...INK)
-      doc.text(doc.splitTextToSize(`${i + 1}. ${r.resource_name || r.resource_id}  (${typeLabel(r.resource_type)} · ${r.region})  —  ${money(r.waste_monthly_cost_usd)}/mo`, W - 2 * MARGIN), MARGIN, ctx.y); ctx.y += 14
+      doc.text(doc.splitTextToSize(clean(`${i + 1}. ${r.resource_name || r.resource_id}  (${typeLabel(r.resource_type)} - ${r.region})  -  ${money(r.waste_monthly_cost_usd)}/mo`), W - 2 * MARGIN), MARGIN, ctx.y); ctx.y += 14
       doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(70, 70, 70)
-      const sum = doc.splitTextToSize(`Action: ${r.fix_recommendation.summary}`, W - 2 * MARGIN - 8)
+      const sum = doc.splitTextToSize(clean(`Action: ${r.fix_recommendation.summary}`), W - 2 * MARGIN - 8)
       doc.text(sum, MARGIN + 8, ctx.y); ctx.y += sum.length * 11 + 8
     })
   }
