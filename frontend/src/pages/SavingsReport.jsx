@@ -1,21 +1,52 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
+import { generateCostReport } from '../lib/pdfReport'
+
+async function fetchAllResources() {
+  let page = 1, all = [], totalPages = 1
+  do {
+    const { data } = await api.get(`/resources?page=${page}&page_size=100`)
+    all = all.concat(data.resources || [])
+    totalPages = data.total_pages || 1
+    page++
+  } while (page <= totalPages && page < 50)
+  return all
+}
 
 export default function SavingsReport() {
   const [summary, setSummary] = useState(null)
   const [wasters, setWasters] = useState([])
   const [trend, setTrend] = useState([])
+  const [connectionsList, setConnectionsList] = useState([])
+  const [resourcesAll, setResourcesAll] = useState([])
+  const [account, setAccount] = useState('')
   const [loading, setLoading] = useState(true)
+  const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
     Promise.all([
       api.get('/dashboard/summary').then(r => setSummary(r.data)),
       api.get('/dashboard/top-waste?limit=20').then(r => setWasters(r.data.resources || [])),
       api.get('/dashboard/trend?days=30').then(r => setTrend(r.data.data_points || [])),
+      api.get('/connections').then(r => {
+        const cs = r.data.connections || []
+        setConnectionsList(cs)
+        setAccount(cs.length === 1 ? cs[0].display_name : cs.length ? `${cs.length} cloud accounts` : 'All accounts')
+      }).catch(() => {}),
+      fetchAllResources().then(setResourcesAll).catch(() => {}),
     ]).finally(() => setLoading(false))
   }, [])
 
-  const handlePrint = () => window.print()
+  const handleDownload = async () => {
+    setDownloading(true)
+    try {
+      await generateCostReport({ summary, trend, connections: connectionsList, resources: resourcesAll, account })
+    } catch {
+      alert('Could not generate the report. Please try again.')
+    } finally {
+      setDownloading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -38,12 +69,19 @@ export default function SavingsReport() {
           <h1 className="text-2xl font-bold text-white">Savings Report</h1>
           <p className="mt-1 text-sm text-slate-400">Your cloud cost optimization summary</p>
         </div>
-        <button onClick={handlePrint}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 transition-all">
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Download PDF
+        <button onClick={handleDownload} disabled={downloading}
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-60 transition-all">
+          {downloading ? (
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          )}
+          {downloading ? 'Generating…' : 'Download PDF Report'}
         </button>
       </div>
 
