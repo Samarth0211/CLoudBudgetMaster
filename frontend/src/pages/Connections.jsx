@@ -47,6 +47,25 @@ export default function Connections() {
     return () => clearInterval(t)
   }, [connections])
 
+  // Track when each connection started scanning + tick a clock for the elapsed display.
+  const [scanStart, setScanStart] = useState({})
+  const [, setTick] = useState(0)
+  useEffect(() => {
+    setScanStart(prev => {
+      const next = { ...prev }
+      connections.forEach(c => {
+        if (c.status === 'scanning' && !next[c.id]) next[c.id] = Date.now()
+        if (c.status !== 'scanning' && next[c.id]) delete next[c.id]
+      })
+      return next
+    })
+  }, [connections])
+  useEffect(() => {
+    if (!connections.some(c => c.status === 'scanning')) return
+    const t = setInterval(() => setTick(n => n + 1), 1000)
+    return () => clearInterval(t)
+  }, [connections])
+
   const fetchConnections = async () => {
     try {
       const { data } = await api.get('/connections')
@@ -175,7 +194,20 @@ export default function Connections() {
                       </button>
                     </div>
                   </div>
-                  {conn.last_scanned_at && (
+                  {isScanning ? (
+                    <div className="mt-3 border-t border-white/5 pt-3">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-medium text-[var(--orange-bright)]">Scanning all regions…</span>
+                        <span className="font-mono text-slate-400">{fmtElapsed(scanStart[conn.id])}</span>
+                      </div>
+                      <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/5">
+                        <div className="scanbar h-full w-1/3 rounded-full bg-gradient-to-r from-[#FF9900] to-[#EC7211]" />
+                      </div>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        Usually under a minute — checking EC2, EBS, RDS &amp; Elastic IPs across every region.
+                      </p>
+                    </div>
+                  ) : conn.last_scanned_at && (
                     <p className="mt-3 text-xs text-slate-600 border-t border-white/5 pt-3">
                       Last scanned: {new Date(conn.last_scanned_at).toLocaleString()}
                     </p>
@@ -358,6 +390,12 @@ function AddConnectionModal({ onClose, onAdded }) {
       </div>
     </div>
   )
+}
+
+function fmtElapsed(startMs) {
+  if (!startMs) return '0:00'
+  const s = Math.max(0, Math.floor((Date.now() - startMs) / 1000))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }
 
 function StatusBadge({ status }) {
