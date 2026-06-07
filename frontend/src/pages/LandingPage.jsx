@@ -252,19 +252,31 @@ function Hero({ onCta }) {
   )
 }
 
-/* ---- Trust marquee ---- */
-function TrustMarquee() {
-  const items = ['Acme Robotics', 'Northwind', 'Helio Labs', 'Quantel', 'Datafold', 'Pinecrest', 'Mesa Health', 'Voyager', 'Brightline', 'Stacksmith']
-  const row = [...items, ...items]
+/* ---- Trust strip ---- honest security/capability signals (no fake customers) */
+function TrustStrip() {
+  const items = [
+    { icon: PATHS.eye, t: 'Read-only access', s: 'We never modify your infrastructure' },
+    { icon: PATHS.lock, t: 'AES-256 encrypted', s: 'Credentials encrypted at rest' },
+    { icon: PATHS.shield, t: 'No write permissions', s: 'Scoped to read-only, always' },
+    { icon: PATHS.cloud, t: 'AWS · GCP · Azure · Snowflake', s: 'One dashboard, every cloud' },
+  ]
   return (
-    <section className="border-y border-[var(--border-soft)] bg-[var(--canvas-2)] py-9">
-      <p className="mb-6 text-center text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--fg-4)]">
-        Trusted by engineering teams cutting cloud waste
-      </p>
-      <div className="relative overflow-hidden" style={{ maskImage: 'linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)', WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)' }}>
-        <div className="marquee-track flex w-max items-center gap-14">
-          {row.map((n, i) => (
-            <span key={i} className="whitespace-nowrap text-[19px] font-semibold tracking-tight text-[var(--fg-4)] transition-colors hover:text-[var(--fg-2)]">{n}</span>
+    <section className="border-y border-[var(--border-soft)] bg-[var(--canvas-2)] py-10">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <p className="mb-8 text-center text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--fg-4)]">
+          Built for engineers who take cloud security seriously
+        </p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((it) => (
+            <div key={it.t} className="flex items-start gap-3 rounded-xl border border-[var(--border)] bg-[var(--ink)] px-4 py-3.5">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-[var(--border)] text-[var(--orange-bright)]" style={{ background: 'var(--orange-tint)' }}>
+                <Icon d={it.icon} className="h-5 w-5" sw={1.8} />
+              </span>
+              <div>
+                <p className="text-[13px] font-semibold text-white">{it.t}</p>
+                <p className="text-[12px] text-[var(--fg-4)]">{it.s}</p>
+              </div>
+            </div>
           ))}
         </div>
       </div>
@@ -678,7 +690,7 @@ export default function LandingPage() {
       <LandingNav onCta={start} onSignIn={signIn} />
       <main>
         <Hero onCta={start} />
-        <TrustMarquee />
+        <TrustStrip />
         <Stats />
         <Features />
         <HowItWorks />
