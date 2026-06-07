@@ -20,6 +20,7 @@ class AuthResponse(BaseModel):
     access_token: str
     refresh_token: str
     expires_at: int
+    is_admin: bool = False
 
 
 class ProfileResponse(BaseModel):

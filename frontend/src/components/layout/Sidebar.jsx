@@ -1,5 +1,10 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import BrandLogo from '../shared/BrandLogo'
+import { useAuth } from '../../hooks/useAuth'
+
+const ADMIN_ITEMS = [
+  { path: '/admin/blog', label: 'Blog', icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m-6 8h2m-2-4h2m4-3h2a2 2 0 012 2v7a2 2 0 01-2 2h-2v-9z' },
+]
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -38,6 +43,7 @@ function NavSection({ title, items }) {
 
 export default function Sidebar() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   return (
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220]">
@@ -51,6 +57,7 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto px-2 py-3">
         <NavSection title="Overview" items={NAV_ITEMS.slice(0, 2)} />
         <NavSection title="Manage" items={NAV_ITEMS.slice(2, 6)} />
+        {user?.is_admin && <NavSection title="Admin" items={ADMIN_ITEMS} />}
         <NavSection title="Account" items={NAV_ITEMS.slice(6)} />
       </nav>
 

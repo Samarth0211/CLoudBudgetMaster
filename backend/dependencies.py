@@ -1,6 +1,7 @@
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Depends
 from backend.db.client import get_db
 from backend.core.security import decode_token
+from backend.config import get_settings
 
 
 async def get_current_user(request: Request):
@@ -20,3 +21,11 @@ async def get_current_user(request: Request):
         raise HTTPException(status_code=404, detail="User profile not found")
 
     return profile.data
+
+
+async def require_admin(user=Depends(get_current_user)):
+    """Allow only emails listed in ADMIN_EMAILS (comma-separated) to manage the blog."""
+    admins = [e.strip().lower() for e in (get_settings().admin_emails or "").split(",") if e.strip()]
+    if not admins or (user.get("email") or "").lower() not in admins:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return user

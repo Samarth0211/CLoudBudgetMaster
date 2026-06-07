@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { BLOGS } from '../data/blogs'
+import api from '../lib/api'
 import BrandLogo from '../components/shared/BrandLogo'
 
 const CATEGORY_COLORS = {
@@ -11,6 +12,11 @@ const CATEGORY_COLORS = {
 }
 
 export default function Blog() {
+  const [posts, setPosts] = useState([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    api.get('/blog/posts').then(r => setPosts(r.data.posts || [])).catch(() => setPosts([])).finally(() => setLoading(false))
+  }, [])
   return (
     <div className="min-h-screen bg-[#0B1220]">
       <div className="max-w-4xl mx-auto px-6 py-16">
@@ -34,7 +40,9 @@ export default function Blog() {
 
         {/* Posts */}
         <div className="space-y-4">
-          {BLOGS.map((post) => (
+          {loading && <p className="text-sm text-slate-500">Loading…</p>}
+          {!loading && posts.length === 0 && <p className="text-sm text-slate-500">New articles are on the way — check back soon.</p>}
+          {posts.map((post) => (
             <Link key={post.slug} to={`/blog/${post.slug}`}
               className="block rounded-xl border border-slate-800 bg-[#232F3E] p-5 hover:border-slate-700 transition-colors group">
               <div className="flex items-start justify-between gap-4">
@@ -43,11 +51,11 @@ export default function Blog() {
                     <span className={`inline-flex rounded border px-2 py-0.5 text-[10px] font-medium ${CATEGORY_COLORS[post.category] || 'bg-slate-800 text-slate-400 border-slate-700'}`}>
                       {post.category}
                     </span>
-                    <span className="text-[11px] text-slate-600">{post.readTime}</span>
+                    <span className="text-[11px] text-slate-600">{post.read_time}</span>
                   </div>
                   <h2 className="text-base font-semibold text-white group-hover:text-indigo-400 transition-colors">{post.title}</h2>
                   <p className="text-sm text-slate-400 mt-1.5 line-clamp-2">{post.excerpt}</p>
-                  <p className="text-xs text-slate-600 mt-2">{new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                  <p className="text-xs text-slate-600 mt-2">{post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</p>
                 </div>
               </div>
             </Link>

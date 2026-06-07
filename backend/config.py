@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
     environment: str = "development"
 
+    # Blog / SEO
+    admin_emails: str = ""  # comma-separated emails allowed to manage blog posts
+    site_url: str = "https://cloudbudgetmaster.com"  # canonical public origin (no trailing slash)
+    blog_dist_dir: str = ""  # where to write static blog HTML (the nginx-served dist/); empty = skip file gen
+
     # Plan limits
     plan_limits: dict = {
         "free": {"max_connections": 1, "max_alert_rules": 3, "scan_frequency": "daily"},

@@ -15,6 +15,7 @@ import Pricing from './pages/Pricing'
 import Settings from './pages/Settings'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import BlogAdmin from './pages/BlogAdmin'
 import Security from './pages/Security'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -99,6 +100,11 @@ export default function App() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <AppLayout><Settings /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/blog" element={
+        <ProtectedRoute>
+          <AppLayout><BlogAdmin /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" replace />} />

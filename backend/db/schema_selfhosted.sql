@@ -107,3 +107,23 @@ CREATE INDEX IF NOT EXISTS idx_resource_snapshots_lookup ON resource_snapshots(r
 CREATE INDEX IF NOT EXISTS idx_resources_connection ON resources(connection_id);
 CREATE INDEX IF NOT EXISTS idx_cost_snapshots_connection ON cost_snapshots(connection_id);
 CREATE INDEX IF NOT EXISTS idx_alert_events_user ON alert_events(user_id);
+
+-- Marketing blog (SEO). Authored via the admin UI; published posts are also
+-- rendered to static HTML in the nginx dist for crawlers/social previews.
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  excerpt TEXT DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',          -- markdown source
+  category TEXT DEFAULT 'FinOps',
+  cover_image TEXT DEFAULT '',
+  author TEXT DEFAULT 'CloudBudgetMaster',
+  meta_description TEXT DEFAULT '',
+  keywords TEXT DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  published_at TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts (status, published_at DESC);

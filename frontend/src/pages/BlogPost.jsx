@@ -1,10 +1,20 @@
+import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { BLOGS } from '../data/blogs'
+import api from '../lib/api'
 import BrandLogo from '../components/shared/BrandLogo'
 
 export default function BlogPost() {
   const { slug } = useParams()
-  const post = BLOGS.find(b => b.slug === slug)
+  const [post, setPost] = useState(null)
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    setLoading(true)
+    api.get(`/blog/posts/${slug}`).then(r => setPost(r.data)).catch(() => setPost(null)).finally(() => setLoading(false))
+  }, [slug])
+
+  if (loading) {
+    return <div className="min-h-screen bg-[#0B1220] flex items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#FF9900]" /></div>
+  }
 
   if (!post) {
     return (
@@ -37,9 +47,9 @@ export default function BlogPost() {
           <Link to="/blog" className="text-xs text-slate-500 hover:text-slate-300 transition-colors mb-4 inline-block">&larr; Back to blog</Link>
           <h1 className="text-2xl font-bold text-white leading-tight">{post.title}</h1>
           <div className="flex items-center gap-3 mt-3">
-            <span className="text-xs text-slate-500">{new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            <span className="text-xs text-slate-500">{post.published_at ? new Date(post.published_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : ''}</span>
             <span className="text-xs text-slate-600">&middot;</span>
-            <span className="text-xs text-slate-500">{post.readTime}</span>
+            <span className="text-xs text-slate-500">{post.read_time}</span>
             <span className="text-xs text-slate-600">&middot;</span>
             <span className="text-xs text-indigo-400">{post.category}</span>
           </div>

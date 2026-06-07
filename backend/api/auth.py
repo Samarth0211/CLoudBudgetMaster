@@ -9,6 +9,7 @@ from backend.core.email_service import send_verification_email, send_password_re
 from backend.core.rate_limit import limiter
 from backend.core.otp_store import set_code, verify_code
 from backend.core.security import hash_password, verify_password, issue_token
+from backend.config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,6 +38,11 @@ def validate_password(password: str) -> str | None:
     return None
 
 
+def _is_admin(email: str) -> bool:
+    admins = [e.strip().lower() for e in (get_settings().admin_emails or "").split(",") if e.strip()]
+    return bool(admins) and (email or "").lower() in admins
+
+
 def _auth_response(profile: dict) -> AuthResponse:
     token, exp = issue_token(profile["id"])
     return AuthResponse(
@@ -47,6 +53,7 @@ def _auth_response(profile: dict) -> AuthResponse:
         access_token=token,
         refresh_token=token,
         expires_at=exp,
+        is_admin=_is_admin(profile["email"]),
     )
 
 
