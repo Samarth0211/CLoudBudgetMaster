@@ -80,7 +80,7 @@ def _head(*, title, description, canonical, image, keywords="", og_type="website
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="{_e(canonical)}" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
-  <meta name="theme-color" content="#0B1220" />
+  <meta name="theme-color" content="#f4f6fb" />
   <meta property="og:site_name" content="CloudBudgetMaster" />
   <meta property="og:type" content="{og_type}" />
   <meta property="og:title" content="{_e(title)}" />
@@ -99,33 +99,33 @@ def _head(*, title, description, canonical, image, keywords="", og_type="website
 
 
 _CSS = """
-*{box-sizing:border-box}body{margin:0;background:#0B1220;color:#e2e8f0;font-family:Inter,system-ui,sans-serif;line-height:1.65}
+*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#334155;font-family:Inter,system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}.wrap{max-width:760px;margin:0 auto;padding:0 24px}
-header.site{border-bottom:1px solid #1e293b;background:rgba(11,18,32,.9);position:sticky;top:0;backdrop-filter:blur(8px);z-index:10}
+header.site{border-bottom:1px solid #e7ebf1;background:rgba(255,255,255,.85);position:sticky;top:0;backdrop-filter:blur(10px);z-index:10}
 header.site .row{max-width:1040px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff}.brand img{width:28px;height:28px;border-radius:7px}
-nav.top a{color:#94a3b8;font-size:14px;margin-left:20px}nav.top a:hover{color:#fff}
-.btn{background:#FF9900;color:#1a1205!important;font-weight:600;padding:8px 16px;border-radius:9px;font-size:14px}
-.cat{display:inline-block;border:1px solid #FF990033;background:#FF990014;color:#FF9900;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
-h1{color:#fff;font-size:34px;line-height:1.2;margin:18px 0 10px;font-weight:800}
-h2{color:#fff;font-size:24px;margin:34px 0 12px;font-weight:700}h3{color:#fff;font-size:19px;margin:26px 0 8px}
-article p{color:#cbd5e1;margin:14px 0}article ul,article ol{color:#cbd5e1;padding-left:22px}article li{margin:6px 0}
-article a{color:#FF9900;text-decoration:underline}article img{max-width:100%;border-radius:12px;margin:18px 0}
-article code{background:#1e293b;color:#fcd34d;padding:2px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.88em}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#0f172a}.brand img{width:28px;height:28px;border-radius:7px}
+nav.top a{color:#475569;font-size:14px;margin-left:20px}nav.top a:hover{color:#0f172a}
+.btn{background:#FF9900;color:#1a1205!important;font-weight:600;padding:8px 16px;border-radius:9px;font-size:14px}.btn:hover{filter:brightness(1.05)}
+.cat{display:inline-block;border:1px solid #FF990033;background:#FF990014;color:#b4530a;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+h1{color:#0f172a;font-size:34px;line-height:1.2;margin:18px 0 10px;font-weight:800;letter-spacing:-0.02em}
+h2{color:#0f172a;font-size:24px;margin:34px 0 12px;font-weight:700;letter-spacing:-0.01em}h3{color:#0f172a;font-size:19px;margin:26px 0 8px}
+article p{color:#334155;margin:14px 0}article ul,article ol{color:#334155;padding-left:22px}article li{margin:6px 0}
+article a{color:#b4530a;text-decoration:underline}article img{max-width:100%;border-radius:12px;margin:18px 0}
+article code{background:#eef1f6;color:#b4530a;padding:2px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.88em}
 article pre{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;overflow-x:auto}
 article pre code{background:none;color:#e2e8f0;padding:0}
-article blockquote{border-left:3px solid #FF9900;margin:18px 0;padding:4px 0 4px 18px;color:#94a3b8}
-article table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}article th,article td{border:1px solid #1e293b;padding:8px 12px;text-align:left}article th{background:#111c2e;color:#fff}
+article blockquote{border-left:3px solid #FF9900;margin:18px 0;padding:4px 0 4px 18px;color:#64748b}
+article table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}article th,article td{border:1px solid #e2e8f0;padding:8px 12px;text-align:left}article th{background:#f1f5f9;color:#0f172a}
 .meta{color:#64748b;font-size:13px;margin:6px 0 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .cover{width:100%;border-radius:14px;margin:8px 0 6px}
-.cta{margin:48px 0 16px;border:1px solid #1e293b;background:#111c2e;border-radius:16px;padding:28px;text-align:center}
-.cta h3{margin:0 0 6px}.cta p{color:#94a3b8;margin:0 0 16px}
-footer.site{border-top:1px solid #1e293b;margin-top:48px;color:#64748b;font-size:13px}
+.cta{margin:48px 0 16px;border:1px solid #e7ebf1;background:#fff;border-radius:16px;padding:28px;text-align:center;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+.cta h3{margin:0 0 6px;color:#0f172a}.cta p{color:#64748b;margin:0 0 16px}
+footer.site{border-top:1px solid #e7ebf1;margin-top:48px;color:#64748b;font-size:13px}
 footer.site .row{max-width:1040px;margin:0 auto;padding:22px 24px;display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
-footer.site a{color:#94a3b8}footer.site a:hover{color:#fff}
-.card{display:block;border:1px solid #1e293b;background:#111c2e;border-radius:14px;padding:20px;margin:14px 0;transition:border-color .15s}
-.card:hover{border-color:#334155}.card h2{font-size:19px;margin:8px 0 6px}.card p{color:#94a3b8;margin:0;font-size:14px}
-.lede{color:#94a3b8;font-size:16px;margin:6px 0 28px}
+footer.site a{color:#475569}footer.site a:hover{color:#0f172a}
+.card{display:block;border:1px solid #e7ebf1;background:#fff;border-radius:14px;padding:20px;margin:14px 0;transition:border-color .15s,box-shadow .15s;box-shadow:0 1px 2px rgba(15,23,42,.03)}
+.card:hover{border-color:#cbd5e1;box-shadow:0 4px 14px rgba(15,23,42,.06)}.card h2{font-size:19px;margin:8px 0 6px;color:#0f172a}.card p{color:#64748b;margin:0;font-size:14px}
+.lede{color:#64748b;font-size:16px;margin:6px 0 28px}
 """
 
 

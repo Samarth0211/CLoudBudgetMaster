@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
+import { useTheme } from '../hooks/useTheme'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, LabelList
@@ -51,6 +52,7 @@ const CHART_COLORS = ['#FF9900', '#64748b', '#ef4444', '#f59e0b', '#10b981', '#E
 export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { theme } = useTheme()
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
   const [topWaste, setTopWaste] = useState([])
@@ -201,7 +203,7 @@ export default function Dashboard() {
               </div>
 
               {trend.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
+                <ResponsiveContainer width="100%" height={260} key={theme}>
                   <AreaChart data={trend} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
                     <defs>
                       <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">

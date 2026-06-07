@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import api from '../lib/api'
+import { useTheme } from '../hooks/useTheme'
 import { generateCostReport } from '../lib/pdfReport'
 
 const TYPE_LABEL = {
@@ -67,6 +68,7 @@ function buildAiContext({ sum, svc, fc, conns, res, acct }) {
 }
 
 export default function SavingsReport() {
+  const { theme } = useTheme()
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
   const [connections, setConnections] = useState([])
@@ -210,7 +212,7 @@ export default function SavingsReport() {
       {trend.length > 0 && (
         <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 mb-6">
           <h2 className="text-lg font-bold text-white mb-4">30-Day Cost Trend</h2>
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height={220} key={theme}>
             <AreaChart data={trend}>
               <defs><linearGradient id="rptGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF9900" stopOpacity={0.25} /><stop offset="100%" stopColor="#FF9900" stopOpacity={0} /></linearGradient></defs>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-track)" vertical={false} />

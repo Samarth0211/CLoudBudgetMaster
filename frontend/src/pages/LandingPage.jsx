@@ -56,15 +56,26 @@ function useReveal() {
     const targets = []
     if (el.classList.contains('reveal')) targets.push(el)
     el.querySelectorAll('.reveal').forEach(n => targets.push(n))
-    let io
-    const raf = requestAnimationFrame(() => requestAnimationFrame(() => {
-      targets.forEach(t => t.classList.add('armed'))
-      io = new IntersectionObserver((es) => {
-        es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } })
-      }, { threshold: 0, rootMargin: '0px 0px -6% 0px' })
-      targets.forEach(t => io.observe(t))
-    }))
-    return () => { cancelAnimationFrame(raf); if (io) io.disconnect() }
+    if (!targets.length) return
+    targets.forEach(t => t.classList.add('armed'))
+    // Reveal anything currently in/near the viewport, and on scroll/resize.
+    const reveal = () => {
+      const vh = window.innerHeight || document.documentElement.clientHeight
+      targets.forEach(t => {
+        if (t.classList.contains('in')) return
+        const r = t.getBoundingClientRect()
+        if (r.top < vh * 0.94 && r.bottom > -40) t.classList.add('in')
+      })
+    }
+    const raf = requestAnimationFrame(reveal)
+    window.addEventListener('scroll', reveal, { passive: true })
+    window.addEventListener('resize', reveal)
+    // Failsafe: content can never stay invisible, even if scroll never fires.
+    const failsafe = setTimeout(() => targets.forEach(t => t.classList.add('in')), 1500)
+    return () => {
+      cancelAnimationFrame(raf); clearTimeout(failsafe)
+      window.removeEventListener('scroll', reveal); window.removeEventListener('resize', reveal)
+    }
   }, [])
   return ref
 }
