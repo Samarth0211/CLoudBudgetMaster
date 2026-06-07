@@ -282,3 +282,15 @@ body {
 /* keep white text on hover for orange/primary buttons */
 [data-theme="light"] [class*="bg-indigo-"].hover\:text-white:hover,
 [data-theme="light"] [class*="from-indigo-"].hover\:text-white:hover { color: #ffffff; }
+
+/* Permanently-dark surfaces (e.g. the auth side panel) must keep their dark text
+   even in light mode — re-assert with higher specificity than the light overrides. */
+[data-theme="light"] .surface-dark.text-white,
+[data-theme="light"] .surface-dark .text-white { color: #fff; }
+[data-theme="light"] .surface-dark .text-slate-200 { color: #e2e8f0; }
+[data-theme="light"] .surface-dark .text-slate-300 { color: #cbd5e1; }
+[data-theme="light"] .surface-dark .text-slate-400 { color: #94a3b8; }
+[data-theme="light"] .surface-dark .text-slate-500 { color: #64748b; }
+[data-theme="light"] .surface-dark .border-white\/10 { border-color: rgba(255,255,255,0.1); }
+[data-theme="light"] .surface-dark .bg-white\/5 { background-color: rgba(255,255,255,0.05); }
+[data-theme="light"] .surface-dark .bg-white\/10 { background-color: rgba(255,255,255,0.1); }

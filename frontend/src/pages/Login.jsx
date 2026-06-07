@@ -66,7 +66,7 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* Left panel — branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-[#16213a] via-[#0d1426] to-[#0B1220] p-12 text-white relative overflow-hidden">
+      <div className="surface-dark hidden lg:flex lg:w-1/2 flex-col justify-between bg-gradient-to-br from-[#16213a] via-[#0d1426] to-[#0B1220] p-12 text-white relative overflow-hidden">
         <div className="absolute top-20 -right-20 h-64 w-64 rounded-full bg-[#FF9900]/10 blur-3xl" />
         <div className="absolute bottom-20 -left-20 h-48 w-48 rounded-full bg-[#FF9900]/5 blur-3xl" />
 
