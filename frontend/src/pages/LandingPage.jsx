@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/shared/BrandLogo'
 
 /* ============================================================================
@@ -626,11 +626,18 @@ function FinalCTA({ onCta }) {
 }
 
 /* ---- Footer ---- */
+function FootLink({ to, children }) {
+  const cls = 'text-[14px] text-[var(--fg-3)] hover:text-white transition-colors'
+  if (to && to.startsWith('/')) return <Link to={to} className={cls}>{children}</Link>
+  if (to) return <a href={to} className={cls}>{children}</a>
+  return <span className="text-[14px] text-[var(--fg-4)]">{children}</span>
+}
+
 function Footer() {
   const cols = [
-    ['Product', ['Features', 'How it works', 'Pricing', 'Savings calculator', 'Changelog']],
-    ['Supported', ['Amazon Web Services', 'Google Cloud', 'Microsoft Azure', 'Snowflake']],
-    ['Company', ['About', 'Blog', 'Security', 'Careers', 'Contact']],
+    ['Product', [['Features', '#features'], ['How it works', '#how'], ['Pricing', '#pricing'], ['Savings calculator', '#calc']]],
+    ['Supported', [['Amazon Web Services'], ['Google Cloud'], ['Microsoft Azure'], ['Snowflake']]],
+    ['Company', [['About', '/about'], ['Blog', '/blog'], ['Security', '/security'], ['Contact', '/contact']]],
   ]
   return (
     <footer className="border-t border-[var(--border)] bg-[var(--canvas-2)]">
@@ -650,7 +657,7 @@ function Footer() {
             <div key={title}>
               <p className="text-[12px] font-semibold uppercase tracking-[0.12em] text-[var(--fg-4)]">{title}</p>
               <ul className="mt-4 space-y-2.5">
-                {items.map(it => <li key={it}><a href="#" className="text-[14px] text-[var(--fg-3)] hover:text-white transition-colors">{it}</a></li>)}
+                {items.map(([label, to]) => <li key={label}><FootLink to={to}>{label}</FootLink></li>)}
               </ul>
             </div>
           ))}
@@ -658,9 +665,9 @@ function Footer() {
         <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--border-soft)] pt-8">
           <p className="text-[13px] text-[var(--fg-4)]">© 2026 CloudBudgetMaster, Inc. All rights reserved.</p>
           <div className="flex items-center gap-6 text-[13px] text-[var(--fg-4)]">
-            <a href="#" className="hover:text-[var(--fg-2)]">Privacy</a>
-            <a href="#" className="hover:text-[var(--fg-2)]">Terms</a>
-            <a href="#" className="hover:text-[var(--fg-2)]">Status</a>
+            <Link to="/privacy" className="hover:text-[var(--fg-2)]">Privacy</Link>
+            <Link to="/terms" className="hover:text-[var(--fg-2)]">Terms</Link>
+            <Link to="/contact" className="hover:text-[var(--fg-2)]">Contact</Link>
           </div>
         </div>
       </div>

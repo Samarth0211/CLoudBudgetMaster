@@ -15,6 +15,11 @@ import Pricing from './pages/Pricing'
 import Settings from './pages/Settings'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
+import Security from './pages/Security'
+import About from './pages/About'
+import Contact from './pages/Contact'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 import ChatWidget from './components/ChatWidget'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingSpinner from './components/shared/LoadingSpinner'
@@ -86,6 +91,11 @@ export default function App() {
       <Route path="/pricing" element={<Pricing />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
+      <Route path="/security" element={<Security />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/contact" element={<Contact />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
       <Route path="/settings" element={
         <ProtectedRoute>
           <AppLayout><Settings /></AppLayout>
