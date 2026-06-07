@@ -19,6 +19,17 @@ const SVC = {
 const svcLabel = (n) => SVC[n] || (n || '').replace(/^Amazon /, '').replace(/^AWS /, '')
 const money = (n) => `$${Number(n || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 const money0 = (n) => `$${Math.round(Number(n || 0)).toLocaleString()}`
+// Friendly name for whichever open-source model produced the narrative.
+function modelLabel(m) {
+  if (!m || m === 'rule-based') return 'Open-source AI'
+  const id = m.split('/').pop()
+  if (/kimi/i.test(m)) return 'Kimi K2'
+  if (/gpt-oss-120b/i.test(id)) return 'GPT-OSS 120B'
+  if (/gpt-oss/i.test(id)) return 'GPT-OSS'
+  if (/qwen3-32b/i.test(id)) return 'Qwen3 32B'
+  if (/llama-3\.3/i.test(id)) return 'Llama 3.3 70B'
+  return id
+}
 
 async function fetchAllResources() {
   let page = 1, all = [], totalPages = 1
@@ -159,7 +170,7 @@ export default function SavingsReport() {
           <h2 className="text-lg font-bold text-white">AI Analysis</h2>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF9900]/10 px-2.5 py-1 text-[11px] font-medium text-[#FF9900]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#FF9900]" />
-            {insights?.model && insights.model !== 'rule-based' ? `Kimi K2 · ${insights.model.split('/').pop()}` : 'Kimi K2'}
+            {aiLoading ? 'Open-source AI' : modelLabel(insights?.model)}
           </span>
         </div>
         {aiLoading ? (

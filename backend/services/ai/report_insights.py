@@ -19,7 +19,7 @@ import httpx
 from backend.config import get_settings
 
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-FALLBACK_MODEL = "llama-3.3-70b-versatile"
+FALLBACK_MODEL = "llama-3.3-70b-versatile"  # only used when the endpoint is Groq
 
 
 def _money(v) -> str:
@@ -88,7 +88,7 @@ Return ONLY a JSON object with this exact shape:
     {"q": "A question a client would actually ask about this bill", "a": "A direct, number-grounded answer."}
   ]
 }
-Provide 4-6 suggestions (ordered by dollar impact, biggest first) and 4-6 FAQ entries. monthly_savings is your best estimate in USD (use 0 if unknown)."""
+You MUST provide AT LEAST 5 suggestions (ordered by dollar impact, biggest first) and AT LEAST 5 FAQ entries — do not return fewer. monthly_savings is your best estimate in USD (use 0 if unknown)."""
 
 
 def _fallback(ctx: dict) -> dict:
@@ -136,10 +136,21 @@ def _fallback(ctx: dict) -> dict:
     return {"executive_summary": summary, "suggestions": suggestions, "faq": faq, "model": "rule-based"}
 
 
+def _topup(items: list, source: list, minimum: int) -> list:
+    """Ensure at least `minimum` entries by borrowing from the deterministic source."""
+    out = list(items)
+    for s in source:
+        if len(out) >= minimum:
+            break
+        out.append(s)
+    return out
+
+
 async def generate_report_insights(ctx: dict) -> dict:
     """Generate executive summary + suggestions + FAQ for the cost report."""
     settings = get_settings()
-    api_key = settings.groq_api_key
+    base_url = settings.report_ai_base_url or GROQ_API_URL
+    api_key = settings.report_ai_api_key or settings.groq_api_key
     if not api_key:
         return _fallback(ctx)
 
@@ -149,11 +160,17 @@ async def generate_report_insights(ctx: dict) -> dict:
         {"role": "user", "content": "Write the report sections from this brief:\n\n" + _context_block(ctx)},
     ]
 
-    for attempt_model in (model, FALLBACK_MODEL):
+    # Only fall back to the Llama model when we're actually talking to Groq.
+    attempts = [model]
+    if base_url == GROQ_API_URL and model != FALLBACK_MODEL:
+        attempts.append(FALLBACK_MODEL)
+    fb = _fallback(ctx)
+
+    for attempt_model in attempts:
         try:
             async with httpx.AsyncClient(timeout=45.0) as client:
                 resp = await client.post(
-                    GROQ_API_URL,
+                    base_url,
                     headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
                     json={
                         "model": attempt_model,
@@ -167,29 +184,25 @@ async def generate_report_insights(ctx: dict) -> dict:
             content = resp.json()["choices"][0]["message"]["content"]
             data = json.loads(content)
             # normalise shape
-            out = {
-                "executive_summary": str(data.get("executive_summary", "")).strip() or _fallback(ctx)["executive_summary"],
-                "suggestions": [
-                    {
-                        "title": str(s.get("title", "")).strip(),
-                        "detail": str(s.get("detail", "")).strip(),
-                        "monthly_savings": float(s.get("monthly_savings") or 0),
-                    }
-                    for s in (data.get("suggestions") or []) if s.get("title") or s.get("detail")
-                ][:6],
-                "faq": [
-                    {"q": str(f.get("q", "")).strip(), "a": str(f.get("a", "")).strip()}
-                    for f in (data.get("faq") or []) if f.get("q") and f.get("a")
-                ][:6],
+            suggestions = [
+                {
+                    "title": str(s.get("title", "")).strip(),
+                    "detail": str(s.get("detail", "")).strip(),
+                    "monthly_savings": float(s.get("monthly_savings") or 0),
+                }
+                for s in (data.get("suggestions") or []) if s.get("title") or s.get("detail")
+            ][:6]
+            faq = [
+                {"q": str(f.get("q", "")).strip(), "a": str(f.get("a", "")).strip()}
+                for f in (data.get("faq") or []) if f.get("q") and f.get("a")
+            ][:6]
+            # Top up if the model returned too few, so the report never looks thin.
+            return {
+                "executive_summary": str(data.get("executive_summary", "")).strip() or fb["executive_summary"],
+                "suggestions": _topup(suggestions, fb["suggestions"], 3),
+                "faq": _topup(faq, fb["faq"], 3),
                 "model": attempt_model,
             }
-            if not out["suggestions"]:
-                out["suggestions"] = _fallback(ctx)["suggestions"]
-            if not out["faq"]:
-                out["faq"] = _fallback(ctx)["faq"]
-            return out
         except Exception as e:  # noqa: BLE001
             print(f"[AI Report] model {attempt_model} failed: {e}")
-            if attempt_model == FALLBACK_MODEL:
-                break
-    return _fallback(ctx)
+    return fb

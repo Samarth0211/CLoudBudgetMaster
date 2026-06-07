@@ -11,8 +11,13 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     anthropic_api_key: str = ""
     groq_api_key: str = ""
-    # Open-source model (Kimi K2 via Groq) used for AI report narratives.
-    groq_report_model: str = "moonshotai/kimi-k2-instruct"
+    # Open-source model for AI report narratives. Defaults to GPT-OSS-120B on
+    # Groq's free tier (Groq does not currently serve Kimi). To use the actual
+    # Kimi K2, point report_ai_base_url/report_ai_api_key at a provider that
+    # hosts it (e.g. OpenRouter "moonshotai/kimi-k2:free") and set this model id.
+    groq_report_model: str = "openai/gpt-oss-120b"
+    report_ai_base_url: str = ""   # empty -> Groq; any OpenAI-compatible /chat/completions URL
+    report_ai_api_key: str = ""    # empty -> reuse groq_api_key
     resend_api_key: str = ""
     smtp_host: str = ""
     smtp_port: int = 465
