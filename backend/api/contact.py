@@ -1,8 +1,9 @@
 import sqlite3
 from pathlib import Path
 from datetime import datetime, timezone
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, EmailStr, constr
+from backend.core.rate_limit import limiter
 
 router = APIRouter(prefix="/contact", tags=["contact"])
 
@@ -36,7 +37,8 @@ class ContactRequest(BaseModel):
 
 
 @router.post("", status_code=201)
-async def submit_contact(body: ContactRequest):
+@limiter.limit("5/minute")
+async def submit_contact(request: Request, body: ContactRequest):
     """Public endpoint — store a contact/demo request in local SQLite. No auth."""
     try:
         conn = _get_conn()

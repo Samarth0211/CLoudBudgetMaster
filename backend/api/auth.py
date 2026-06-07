@@ -1,17 +1,16 @@
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from backend.db.client import get_supabase
 from backend.models.user import RegisterRequest, LoginRequest, AuthResponse
 from backend.dependencies import get_current_user
 from backend.core.email_service import send_verification_email, send_password_reset_email
+from backend.core.rate_limit import limiter
+from backend.core.otp_store import set_code, verify_code
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-# In-memory OTP store
-_pending_otps: dict = {}
 
 COMMON_PASSWORDS = {
     "123456", "password", "12345678", "qwerty", "123456789", "12345",
@@ -39,7 +38,8 @@ def validate_password(password: str) -> str | None:
 
 
 @router.post("/register", status_code=201)
-async def register(body: RegisterRequest):
+@limiter.limit("5/minute")
+async def register(request: Request, body: RegisterRequest):
     """Validate password, create user, send OTP email. Tokens returned after OTP verification."""
     pw_error = validate_password(body.password)
     if pw_error:
@@ -74,13 +74,9 @@ async def register(body: RegisterRequest):
     except Exception:
         pass
 
-    # Generate and send OTP
+    # Generate and send OTP (stored hashed + attempt-limited in local SQLite)
     code = f"{secrets.randbelow(900000) + 100000}"
-    _pending_otps[body.email.lower()] = {
-        "code": code,
-        "expires": datetime.now(timezone.utc) + timedelta(minutes=10),
-    }
-
+    set_code(body.email, "verify", code)
     send_verification_email(body.email, code, body.full_name)
 
     return {"message": "Verification code sent to your email", "requires_verification": True}
@@ -93,22 +89,12 @@ class VerifyOTPRequest(BaseModel):
 
 
 @router.post("/verify-otp", response_model=AuthResponse)
-async def verify_otp(body: VerifyOTPRequest):
+@limiter.limit("10/minute")
+async def verify_otp(request: Request, body: VerifyOTPRequest):
     """Verify OTP, then sign in and return tokens."""
-    email_key = body.email.lower()
-    otp_data = _pending_otps.get(email_key)
-
-    if not otp_data:
-        raise HTTPException(status_code=400, detail="No pending verification. Please register again.")
-
-    if datetime.now(timezone.utc) > otp_data["expires"]:
-        _pending_otps.pop(email_key, None)
-        raise HTTPException(status_code=400, detail="Code expired. Please register again.")
-
-    if body.code.strip() != otp_data["code"]:
-        raise HTTPException(status_code=400, detail="Invalid verification code")
-
-    _pending_otps.pop(email_key, None)
+    ok, err = verify_code(body.email, "verify", body.code)
+    if not ok:
+        raise HTTPException(status_code=400, detail=err)
 
     # OTP valid — now sign in
     supabase = get_supabase()
@@ -143,7 +129,8 @@ async def verify_otp(body: VerifyOTPRequest):
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(body: LoginRequest):
+@limiter.limit("10/minute")
+async def login(request: Request, body: LoginRequest):
     supabase = get_supabase()
 
     try:
@@ -182,28 +169,18 @@ async def login(body: LoginRequest):
     )
 
 
-# In-memory reset OTP store
-_pending_resets: dict = {}
-
-
 class ForgotPasswordRequest(BaseModel):
     email: str
 
 
 @router.post("/forgot-password")
-async def forgot_password(body: ForgotPasswordRequest):
+@limiter.limit("4/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest):
     """Generate reset code and send via our SMTP."""
     code = f"{secrets.randbelow(900000) + 100000}"
-    email_key = body.email.lower()
-
-    _pending_resets[email_key] = {
-        "code": code,
-        "expires": datetime.now(timezone.utc) + timedelta(minutes=10),
-    }
-
-    # Send email (don't reveal if account exists)
+    set_code(body.email, "reset", code)
+    # Send email (don't reveal whether the account exists)
     send_password_reset_email(body.email, code)
-
     return {"message": "If an account with that email exists, a reset code has been sent."}
 
 
@@ -214,26 +191,16 @@ class ResetPasswordRequest(BaseModel):
 
 
 @router.post("/reset-password")
-async def reset_password(body: ResetPasswordRequest):
+@limiter.limit("10/minute")
+async def reset_password(request: Request, body: ResetPasswordRequest):
     """Verify reset code and update password."""
     pw_error = validate_password(body.new_password)
     if pw_error:
         raise HTTPException(status_code=400, detail=pw_error)
 
-    email_key = body.email.lower()
-    reset_data = _pending_resets.get(email_key)
-
-    if not reset_data:
-        raise HTTPException(status_code=400, detail="No pending reset for this email. Request a new code.")
-
-    if datetime.now(timezone.utc) > reset_data["expires"]:
-        _pending_resets.pop(email_key, None)
-        raise HTTPException(status_code=400, detail="Reset code expired. Request a new one.")
-
-    if body.code.strip() != reset_data["code"]:
-        raise HTTPException(status_code=400, detail="Invalid reset code")
-
-    _pending_resets.pop(email_key, None)
+    ok, err = verify_code(body.email, "reset", body.code)
+    if not ok:
+        raise HTTPException(status_code=400, detail=err)
 
     # Update password via Supabase admin API
     supabase = get_supabase()
@@ -275,7 +242,8 @@ class ChangePasswordRequest(BaseModel):
 
 
 @router.post("/change-password")
-async def change_password(body: ChangePasswordRequest, user=Depends(get_current_user)):
+@limiter.limit("10/minute")
+async def change_password(request: Request, body: ChangePasswordRequest, user=Depends(get_current_user)):
     pw_error = validate_password(body.new_password)
     if pw_error:
         raise HTTPException(status_code=400, detail=pw_error)
