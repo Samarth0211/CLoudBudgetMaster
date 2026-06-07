@@ -92,7 +92,7 @@ export default function Login() {
       </div>
 
       {/* Right panel — form with animated background */}
-      <div className="relative flex w-full lg:w-1/2 items-center justify-center bg-[#0a0a0a] px-6 overflow-hidden">
+      <div className="relative flex w-full lg:w-1/2 items-center justify-center bg-[#0B1220] px-6 overflow-hidden">
         {/* Animated background */}
         <div className="absolute inset-0 auth-grid" />
         <div className="absolute inset-0 auth-glow" />

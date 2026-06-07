@@ -107,13 +107,13 @@ export default function ChatWidget() {
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0a0a0a]" />
+          <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-[#0B1220]" />
         </button>
       )}
 
       {/* Chat Panel */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 flex w-[360px] max-h-[550px] flex-col rounded-lg border border-slate-800 bg-[#0a0a0a] shadow-2xl animate-scale-in overflow-hidden">
+        <div className="fixed bottom-6 right-6 z-50 flex w-[360px] max-h-[550px] flex-col rounded-lg border border-slate-800 bg-[#0B1220] shadow-2xl animate-scale-in overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
             <div className="flex items-center gap-2.5">

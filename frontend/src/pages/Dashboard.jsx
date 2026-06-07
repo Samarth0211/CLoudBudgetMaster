@@ -46,7 +46,7 @@ function wasteReason(r) {
   return m[r.resource_type]?.[r.waste_status] || `Status: ${r.waste_status}`
 }
 
-const CHART_COLORS = ['#6366f1', '#64748b', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6', '#06b6d4', '#ec4899']
+const CHART_COLORS = ['#FF9900', '#64748b', '#ef4444', '#f59e0b', '#10b981', '#EC7211', '#06b6d4', '#ec4899']
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -191,7 +191,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
 
             {/* Spending chart */}
-            <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-[#111827] p-5">
+            <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-[#232F3E] p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-sm font-medium text-slate-200">Daily spending</h3>
                 {selectedDate && (
@@ -205,8 +205,8 @@ export default function Dashboard() {
                   <AreaChart data={trend} onClick={handleChartClick} style={{ cursor: 'pointer' }}>
                     <defs>
                       <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366f1" stopOpacity={0.12} />
-                        <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                        <stop offset="0%" stopColor="#FF9900" stopOpacity={0.12} />
+                        <stop offset="100%" stopColor="#FF9900" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
@@ -220,12 +220,12 @@ export default function Dashboard() {
                       labelFormatter={(d) => new Date(d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                       cursor={{ stroke: '#334155', strokeWidth: 1 }}
                     />
-                    <Area type="monotone" dataKey="total_cost_usd" stroke="#6366f1" strokeWidth={1.5} fill="url(#areaGrad)"
+                    <Area type="monotone" dataKey="total_cost_usd" stroke="#FF9900" strokeWidth={1.5} fill="url(#areaGrad)"
                       dot={(p) => {
                         if (p.payload.date !== selectedDate) return <circle key={p.key} cx={p.cx} cy={p.cy} r={0} />
-                        return <circle key={p.key} cx={p.cx} cy={p.cy} r={4} fill="#6366f1" stroke="#0f172a" strokeWidth={2} />
+                        return <circle key={p.key} cx={p.cx} cy={p.cy} r={4} fill="#FF9900" stroke="#0f172a" strokeWidth={2} />
                       }}
-                      activeDot={({ cx, cy, key }) => <circle key={key} cx={cx} cy={cy} r={4} fill="#6366f1" stroke="#0f172a" strokeWidth={2} />}
+                      activeDot={({ cx, cy, key }) => <circle key={key} cx={cx} cy={cy} r={4} fill="#FF9900" stroke="#0f172a" strokeWidth={2} />}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
@@ -239,7 +239,7 @@ export default function Dashboard() {
             {/* Right column */}
             <div className="space-y-3">
               {ok && (
-                <div className="rounded-xl border border-slate-800 bg-[#111827] p-5">
+                <div className="rounded-xl border border-slate-800 bg-[#232F3E] p-5">
                   <h3 className="text-sm font-medium text-slate-200 mb-4">Waste overview</h3>
 
                   <div className="flex justify-center">
@@ -271,7 +271,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <div className="rounded-xl border border-slate-800 bg-[#111827] p-4">
+              <div className="rounded-xl border border-slate-800 bg-[#232F3E] p-4">
                 <p className="text-xs font-medium text-slate-500 mb-2.5">Quick actions</p>
                 <div className="space-y-1.5">
                   <button onClick={() => navigate('/resources')}
@@ -291,7 +291,7 @@ export default function Dashboard() {
 
           {/* ── Day breakdown ── */}
           {selectedDate && (
-            <div className="rounded-xl border border-slate-800 bg-[#111827] p-5 animate-scale-in">
+            <div className="rounded-xl border border-slate-800 bg-[#232F3E] p-5 animate-scale-in">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="text-sm font-medium text-slate-200">
@@ -391,7 +391,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
                 {topWaste.map((r, i) => (
                   <div key={r.id || i} onClick={() => navigate('/resources')}
-                    className="group rounded-xl border border-slate-800 bg-[#111827] p-4 cursor-pointer hover:border-slate-700 transition-colors">
+                    className="group rounded-xl border border-slate-800 bg-[#232F3E] p-4 cursor-pointer hover:border-slate-700 transition-colors">
                     <div className="flex items-center justify-between mb-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded text-[11px] font-semibold text-slate-400 bg-slate-800">
                         {i + 1}
@@ -425,7 +425,7 @@ export default function Dashboard() {
 /* ── Stat card ── */
 function StatCard({ label, value, change, sub, warn }) {
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#111827] p-4">
+    <div className="rounded-xl border border-slate-800 bg-[#232F3E] p-4">
       <p className="text-xs text-slate-500 mb-1">{label}</p>
       <p className="font-mono text-2xl font-semibold tracking-tight text-white">{value}</p>
       <div className="mt-1">

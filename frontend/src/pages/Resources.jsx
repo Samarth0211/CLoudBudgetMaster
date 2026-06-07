@@ -174,7 +174,7 @@ export default function Resources() {
             return (
               <div key={r.id}
                 className={`animate-fade-up rounded-2xl border overflow-hidden transition-all duration-300 hover:border-white/20 ${
-                  isWaste ? 'border-red-500/20 bg-[#111827]' : 'border-white/10 bg-[#111827]'
+                  isWaste ? 'border-red-500/20 bg-[#232F3E]' : 'border-white/10 bg-[#232F3E]'
                 } ${isSelected ? 'ring-2 ring-indigo-500/40' : ''}`}
                 style={{ animationDelay: `${idx * 0.03}s` }}
               >

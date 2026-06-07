@@ -40,7 +40,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0a0a0a]">
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220]">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 border-b border-slate-800 px-4">
         <BrandLogo className="h-7 w-7" />

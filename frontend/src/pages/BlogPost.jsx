@@ -8,7 +8,7 @@ export default function BlogPost() {
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0B1220] flex items-center justify-center">
         <div className="text-center">
           <p className="text-slate-400">Post not found.</p>
           <Link to="/blog" className="text-sm text-indigo-400 hover:text-indigo-300 mt-2 inline-block">Back to blog</Link>
@@ -18,7 +18,7 @@ export default function BlogPost() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#0B1220]">
       <div className="max-w-3xl mx-auto px-6 py-16">
         {/* Nav */}
         <div className="flex items-center justify-between mb-12">
@@ -73,7 +73,7 @@ export default function BlogPost() {
         </article>
 
         {/* CTA */}
-        <div className="mt-12 rounded-xl border border-slate-800 bg-[#111827] p-6 text-center">
+        <div className="mt-12 rounded-xl border border-slate-800 bg-[#232F3E] p-6 text-center">
           <h3 className="text-base font-semibold text-white">Stop guessing where your cloud money goes</h3>
           <p className="text-sm text-slate-400 mt-1.5">CloudBudgetMaster scans your cloud accounts and finds waste automatically.</p>
           <Link to="/register" className="mt-4 inline-flex rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 transition-colors">

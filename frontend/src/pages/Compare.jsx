@@ -83,7 +83,7 @@ export default function Compare() {
           <p className="text-sm text-slate-400">Select at least 2 resources to compare</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/10 bg-[#111827] overflow-hidden">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>

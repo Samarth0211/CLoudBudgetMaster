@@ -149,7 +149,7 @@ export default function Alerts() {
                 const sev = SEVERITY_STYLES[ev.severity] || SEVERITY_STYLES.warning
                 return (
                   <div key={ev.id}
-                    className={`animate-fade-up rounded-xl border ${ev.dismissed ? 'border-white/5 opacity-50' : sev.border} bg-[#111827] p-4 transition-all`}
+                    className={`animate-fade-up rounded-xl border ${ev.dismissed ? 'border-white/5 opacity-50' : sev.border} bg-[#232F3E] p-4 transition-all`}
                     style={{ animationDelay: `${idx * 0.03}s` }}
                   >
                     <div className="flex items-start gap-3">
@@ -194,7 +194,7 @@ export default function Alerts() {
             <div className="space-y-3">
               {rules.map((rule, idx) => (
                 <div key={rule.id}
-                  className="animate-fade-up rounded-xl border border-white/10 bg-[#111827] p-4"
+                  className="animate-fade-up rounded-xl border border-white/10 bg-[#232F3E] p-4"
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
                   <div className="flex items-center justify-between">
@@ -267,7 +267,7 @@ function CreateRuleModal({ onClose, onCreated }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md rounded-2xl bg-[#111827] border border-white/10 shadow-2xl animate-scale-in">
+      <div className="w-full max-w-md rounded-2xl bg-[#232F3E] border border-white/10 shadow-2xl animate-scale-in">
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
           <h2 className="text-lg font-semibold text-white">Create Alert Rule</h2>
           <button onClick={onClose} className="rounded-lg p-1 hover:bg-white/5 transition-colors">

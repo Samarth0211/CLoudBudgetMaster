@@ -56,7 +56,7 @@ export default function SavingsReport() {
         </div>
 
         {/* Executive Summary */}
-        <div className="rounded-2xl border border-white/10 bg-[#111827] p-6 print:border-gray-200 print:bg-white">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 print:border-gray-200 print:bg-white">
           <h2 className="text-lg font-bold text-white mb-4 print:text-black">Executive Summary</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <SummaryCard label="Monthly Spend" value={`$${monthlyCost.toFixed(2)}`} color="text-white print:text-black" />
@@ -67,7 +67,7 @@ export default function SavingsReport() {
         </div>
 
         {/* Waste Breakdown */}
-        <div className="rounded-2xl border border-white/10 bg-[#111827] p-6 print:border-gray-200 print:bg-white">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 print:border-gray-200 print:bg-white">
           <h2 className="text-lg font-bold text-white mb-4 print:text-black">Top Wasted Resources</h2>
           {wasters.length === 0 ? (
             <p className="text-sm text-slate-400 print:text-gray-500">No waste detected. Great job!</p>
@@ -103,7 +103,7 @@ export default function SavingsReport() {
         </div>
 
         {/* Cost Trend */}
-        <div className="rounded-2xl border border-white/10 bg-[#111827] p-6 print:border-gray-200 print:bg-white">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 print:border-gray-200 print:bg-white">
           <h2 className="text-lg font-bold text-white mb-4 print:text-black">30-Day Cost Trend</h2>
           {trend.length === 0 ? (
             <p className="text-sm text-slate-400 print:text-gray-500">No cost data available yet.</p>
@@ -126,7 +126,7 @@ export default function SavingsReport() {
         </div>
 
         {/* Recommendations */}
-        <div className="rounded-2xl border border-white/10 bg-[#111827] p-6 print:border-gray-200 print:bg-white">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 print:border-gray-200 print:bg-white">
           <h2 className="text-lg font-bold text-white mb-4 print:text-black">Recommendations</h2>
           <ul className="space-y-2 text-sm text-slate-300 print:text-gray-700">
             {wasteCost > 0 && (

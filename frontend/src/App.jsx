@@ -21,21 +21,21 @@ import LoadingSpinner from './components/shared/LoadingSpinner'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B0F1A]"><LoadingSpinner size="lg" /></div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B1220]"><LoadingSpinner size="lg" /></div>
   if (!user) return <Navigate to="/login" replace />
   return children
 }
 
 function PublicRoute({ children }) {
   const { user, loading } = useAuth()
-  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B0F1A]"><LoadingSpinner size="lg" /></div>
+  if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B1220]"><LoadingSpinner size="lg" /></div>
   if (user) return <Navigate to="/dashboard" replace />
   return children
 }
 
 function AppLayout({ children }) {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#0B1220]">
       <Sidebar />
       <Navbar />
       <main className="ml-60 pt-14 p-6">

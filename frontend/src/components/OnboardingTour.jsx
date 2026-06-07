@@ -79,7 +79,7 @@ export default function OnboardingTour() {
 
       {/* Tour Card */}
       <div className="relative z-10 w-full max-w-md mx-4 animate-scale-in">
-        <div className="rounded-2xl border border-white/10 bg-[#111827] shadow-2xl overflow-hidden">
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] shadow-2xl overflow-hidden">
           {/* Progress Bar */}
           <div className="h-1 bg-white/5">
             <div

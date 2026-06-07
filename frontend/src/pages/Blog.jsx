@@ -12,7 +12,7 @@ const CATEGORY_COLORS = {
 
 export default function Blog() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#0B1220]">
       <div className="max-w-4xl mx-auto px-6 py-16">
         {/* Nav */}
         <div className="flex items-center justify-between mb-12">
@@ -36,7 +36,7 @@ export default function Blog() {
         <div className="space-y-4">
           {BLOGS.map((post) => (
             <Link key={post.slug} to={`/blog/${post.slug}`}
-              className="block rounded-xl border border-slate-800 bg-[#111827] p-5 hover:border-slate-700 transition-colors group">
+              className="block rounded-xl border border-slate-800 bg-[#232F3E] p-5 hover:border-slate-700 transition-colors group">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2">
