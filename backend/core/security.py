@@ -1,21 +1,21 @@
 """Self-hosted auth primitives: bcrypt password hashing + HS256 JWTs."""
 import time
+import bcrypt
 import jwt
-from passlib.context import CryptContext
 from backend.config import get_settings
-
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 def hash_password(password: str) -> str:
-    return _pwd.hash(password)
+    # bcrypt only uses the first 72 bytes; truncate explicitly (bcrypt 5 errors otherwise).
+    pw = password.encode("utf-8")[:72]
+    return bcrypt.hashpw(pw, bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(password: str, hashed: str) -> bool:
     if not hashed:
         return False
     try:
-        return _pwd.verify(password, hashed)
+        return bcrypt.checkpw(password.encode("utf-8")[:72], hashed.encode("utf-8"))
     except Exception:
         return False
 
