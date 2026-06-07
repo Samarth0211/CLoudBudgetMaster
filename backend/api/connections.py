@@ -1,3 +1,5 @@
+import asyncio
+import threading
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
 from backend.db.client import get_db
@@ -103,6 +105,29 @@ async def delete_connection(connection_id: str, user=Depends(get_current_user)):
     return {"message": "Connection deleted", "id": connection_id}
 
 
+def _run_scan_bg(connection_id: str, provider: str, credentials: dict, user_id: str):
+    """Run a scan off-request in a background thread, then update the status.
+
+    The cloud scan makes many blocking boto3 calls across regions and can take
+    minutes — far past gunicorn's worker timeout. Running it in a daemon thread
+    keeps the request fast (the client polls connection status for the result).
+    """
+    from backend.core.scanner_runner import run_scan
+    db = get_db()
+    try:
+        asyncio.run(run_scan(connection_id, provider, credentials, user_id))
+        db.table("cloud_connections").update({
+            "status": "active",
+            "last_scanned_at": datetime.now(timezone.utc).isoformat(),
+            "error_message": None,
+        }).eq("id", connection_id).execute()
+    except Exception as e:
+        db.table("cloud_connections").update({
+            "status": "error",
+            "error_message": str(e)[:500],
+        }).eq("id", connection_id).execute()
+
+
 @router.post("/{connection_id}/scan")
 async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
     db = get_db()
@@ -120,30 +145,20 @@ async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
     if conn.data.get("status") == "scanning":
         raise HTTPException(status_code=429, detail="Scan already in progress")
 
-    # Mark as scanning
+    # Mark as scanning, then kick the scan off in the background and return now.
     db.table("cloud_connections") \
-        .update({"status": "scanning"}) \
+        .update({"status": "scanning", "error_message": None}) \
         .eq("id", connection_id) \
         .execute()
 
-    # Run scan (inline for now, background worker in production)
-    try:
-        from backend.core.scanner_runner import run_scan
-        credentials = decrypt_credentials(conn.data["credentials_encrypted"])
-        await run_scan(connection_id, conn.data["provider"], credentials, user["id"])
+    credentials = decrypt_credentials(conn.data["credentials_encrypted"])
+    threading.Thread(
+        target=_run_scan_bg,
+        args=(connection_id, conn.data["provider"], credentials, user["id"]),
+        daemon=True,
+    ).start()
 
-        db.table("cloud_connections") \
-            .update({"status": "active", "last_scanned_at": datetime.now(timezone.utc).isoformat(), "error_message": None}) \
-            .eq("id", connection_id) \
-            .execute()
-    except Exception as e:
-        db.table("cloud_connections") \
-            .update({"status": "error", "error_message": str(e)[:500]}) \
-            .eq("id", connection_id) \
-            .execute()
-        raise HTTPException(status_code=500, detail=f"Scan failed: {str(e)[:200]}")
-
-    return {"message": "Scan completed", "connection_id": connection_id, "status": "active"}
+    return {"message": "Scan started", "connection_id": connection_id, "status": "scanning"}
 
 
 @router.get("/{connection_id}/status", response_model=ConnectionStatusResponse)

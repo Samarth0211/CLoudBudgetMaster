@@ -40,6 +40,13 @@ export default function Connections() {
 
   useEffect(() => { fetchConnections() }, [])
 
+  // While any connection is scanning, poll so results appear without a manual refresh.
+  useEffect(() => {
+    if (!connections.some(c => c.status === 'scanning')) return
+    const t = setInterval(fetchConnections, 4000)
+    return () => clearInterval(t)
+  }, [connections])
+
   const fetchConnections = async () => {
     try {
       const { data } = await api.get('/connections')
@@ -65,9 +72,9 @@ export default function Connections() {
     setScanningId(id)
     try {
       await api.post(`/connections/${id}/scan`)
-      await fetchConnections()
+      await fetchConnections()   // shows 'scanning'; the poll effect refreshes until done
     } catch (err) {
-      alert(err.response?.data?.detail || 'Scan failed')
+      alert(err.response?.data?.detail || 'Failed to start scan')
     } finally {
       setScanningId(null)
     }
