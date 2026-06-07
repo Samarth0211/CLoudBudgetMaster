@@ -376,6 +376,43 @@ async def cost_by_tag(
     }
 
 
+@router.get("/cost-by-service")
+async def cost_by_service(
+    days: int = Query(30, ge=1, le=90),
+    user=Depends(get_current_user),
+):
+    """Aggregate per-service cost across the last `days` of cost snapshots."""
+    db = get_db()
+    conns = db.table("cloud_connections").select("id").eq("user_id", user["id"]).execute()
+    conn_ids = [c["id"] for c in (conns.data or [])]
+    if not conn_ids:
+        return {"services": [], "total": 0, "days": 0}
+
+    snaps = db.table("cost_snapshots") \
+        .select("snapshot_date, raw_breakdown, total_cost_usd") \
+        .in_("connection_id", conn_ids) \
+        .order("snapshot_date") \
+        .execute()
+    rows = snaps.data or []
+    dates = sorted({s["snapshot_date"] for s in rows})[-days:]
+    dateset = set(dates)
+
+    merged = {}
+    total = 0.0
+    for s in rows:
+        if s["snapshot_date"] not in dateset:
+            continue
+        total += s.get("total_cost_usd", 0) or 0
+        for svc, cost in (s.get("raw_breakdown") or {}).items():
+            merged[svc] = merged.get(svc, 0) + (cost or 0)
+
+    services = [
+        {"service": k, "cost": round(v, 2), "percent": round(v / total * 100, 1) if total > 0 else 0}
+        for k, v in sorted(merged.items(), key=lambda x: x[1], reverse=True) if v > 0
+    ]
+    return {"services": services, "total": round(total, 2), "days": len(dates)}
+
+
 def _calc_wow_change(db, conn_ids: list) -> tuple[float, float]:
     """Calculate week-over-week cost change from cost_snapshots."""
     try:
