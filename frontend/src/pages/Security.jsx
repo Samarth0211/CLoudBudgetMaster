@@ -39,8 +39,8 @@ export default function Security() {
           Your resources, costs, and alerts are only ever visible to you.
         </Card>
         <Card title="Authenticated access">
-          Accounts are protected by Supabase Auth with JWT sessions on every request, plus email verification
-          and a strong-password policy at signup.
+          Accounts are protected by JWT sessions issued by our own backend on every request, plus email
+          verification and a strong-password policy at signup.
         </Card>
       </div>
 

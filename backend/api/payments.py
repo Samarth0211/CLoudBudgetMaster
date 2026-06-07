@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from backend.config import get_settings
 from backend.dependencies import get_current_user
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.core.rate_limit import limiter
 from backend.core.payment_store import record_order, get_order, mark_captured
 
@@ -141,8 +141,8 @@ async def capture_order(request: Request, body: CaptureRequest, user=Depends(get
 
     # 3. All good — mark captured (prevents replay) and upgrade.
     mark_captured(body.order_id)
-    supabase = get_supabase()
-    supabase.table("profiles").update({"plan": "pro"}).eq("id", user["id"]).execute()
+    db = get_db()
+    db.table("profiles").update({"plan": "pro"}).eq("id", user["id"]).execute()
 
     return {"status": "success", "plan": "pro", "paypal_order_id": data["id"]}
 
@@ -168,8 +168,8 @@ async def redeem_promo(request: Request, body: PromoCodeRequest, user=Depends(ge
         raise HTTPException(status_code=400, detail="This promo code has expired")
 
     # Upgrade user
-    supabase = get_supabase()
-    supabase.table("profiles").update({
+    db = get_db()
+    db.table("profiles").update({
         "plan": promo["plan"],
         "promo_code": code,
     }).eq("id", user["id"]).execute()

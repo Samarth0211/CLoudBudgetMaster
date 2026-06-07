@@ -20,7 +20,7 @@ def _get_active_regions(access_key: str, secret_key: str) -> list[str]:
     return [r["RegionName"] for r in response.get("Regions", [])]
 
 
-async def scan_aws(connection_id: str, credentials: dict, user_id: str, supabase):
+async def scan_aws(connection_id: str, credentials: dict, user_id: str, db):
     """Run full AWS scan: cost data + resource detection across ALL regions."""
     access_key = credentials["access_key_id"]
     secret_key = credentials["secret_access_key"]
@@ -30,7 +30,7 @@ async def scan_aws(connection_id: str, credentials: dict, user_id: str, supabase
 
     # Store cost snapshots
     for day in cost_data["results_by_date"]:
-        supabase.table("cost_snapshots").upsert({
+        db.table("cost_snapshots").upsert({
             "connection_id": connection_id,
             "user_id": user_id,
             "snapshot_date": day["date"],
@@ -63,10 +63,10 @@ async def scan_aws(connection_id: str, credentials: dict, user_id: str, supabase
                 print(f"[scan_aws] {name} in {region} failed: {e}")
 
     # 4. Store resources — clear old, insert new
-    supabase.table("resources").delete().eq("connection_id", connection_id).execute()
+    db.table("resources").delete().eq("connection_id", connection_id).execute()
 
     for resource in all_resources:
-        supabase.table("resources").insert({
+        db.table("resources").insert({
             "connection_id": connection_id,
             "user_id": user_id,
             "provider": "aws",

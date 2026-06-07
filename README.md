@@ -6,7 +6,7 @@
 ![Python](https://img.shields.io/badge/python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![React](https://img.shields.io/badge/react-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![FastAPI](https://img.shields.io/badge/fastapi-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![Supabase](https://img.shields.io/badge/supabase-postgres-3FCF8E?style=for-the-badge&logo=supabase&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/postgresql-16-336791?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ---
 
@@ -32,14 +32,14 @@
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Python 3.12, FastAPI, Supabase (Postgres + Auth), httpx |
+| **Backend** | Python 3.12, FastAPI, self-hosted PostgreSQL 16 (psycopg2), httpx |
 | **Frontend** | React 19, Vite 7, Tailwind CSS v4, React Router, Recharts |
 | **AI** | Groq API (Llama 3.3 70B) for chat & recommendations |
 | **Email** | Resend API for alert notifications |
 | **Cloud APIs** | AWS (boto3), GCP (google-cloud-*) — all read-only |
-| **Auth** | Supabase Auth (JWT) with Row Level Security |
+| **Auth** | Self-hosted bcrypt + HS256 JWT (backend-owned) |
 | **Security** | Fernet AES-256 encryption for stored credentials |
-| **Deploy** | Vercel (frontend), Render (backend) |
+| **Deploy** | Hostinger VPS (nginx + gunicorn/systemd) |
 
 ---
 
@@ -52,8 +52,8 @@ CloudPilot/
 │   ├── config.py                  # Settings from .env (pydantic-settings)
 │   ├── dependencies.py            # Auth dependency (JWT validation)
 │   ├── db/
-│   │   ├── client.py              # Supabase client singleton
-│   │   └── migrations/            # SQL migrations (run in Supabase SQL Editor)
+│   │   ├── client.py              # psycopg2 query-builder (PostgreSQL)
+│   │   └── schema_selfhosted.sql  # Schema to apply to PostgreSQL
 │   ├── api/                       # Route handlers
 │   │   ├── auth.py                # Login, register, profile
 │   │   ├── connections.py         # Cloud connection CRUD + scan trigger
@@ -77,7 +77,7 @@ CloudPilot/
 │   │   ├── pages/                 # Dashboard, Resources, Connections, Alerts, etc.
 │   │   ├── components/            # ChatWidget, OnboardingTour, Sidebar, Navbar
 │   │   ├── hooks/                 # useAuth
-│   │   ├── lib/                   # api.js (axios), supabase.js
+│   │   ├── lib/                   # api.js (axios)
 │   │   └── index.css              # Custom animations, glassmorphism, print styles
 │   └── index.html
 ├── .env.example                   # Sample backend env vars
@@ -91,7 +91,7 @@ CloudPilot/
 
 - **Python 3.12+**
 - **Node.js 18+** and npm
-- **Supabase account** (free tier works)
+- **PostgreSQL 16** (a local or self-hosted instance)
 - **Groq API key** (free tier — for AI chat & recommendations)
 - **AWS credentials** (read-only IAM user — for scanning)
 - Optional: **Resend API key** (for email alerts)
@@ -101,17 +101,22 @@ CloudPilot/
 
 ## Getting API Keys
 
-### 1. Supabase (Database + Auth) — Required
+### 1. PostgreSQL (Database) — Required
 
-1. Go to [supabase.com](https://supabase.com) and create a free account
-2. Click **New Project** → pick a name and region → set a database password
-3. Once created, go to **Settings → API**:
-   - Copy **Project URL** → this is your `SUPABASE_URL`
-   - Copy **anon/public key** → this is your `VITE_SUPABASE_ANON_KEY` (frontend)
-   - Copy **service_role key** → this is your `SUPABASE_SERVICE_KEY` (backend — keep secret!)
-4. Go to **SQL Editor** and run the migrations:
-   - Paste contents of `backend/db/migrations/001_initial_schema.sql` → Run
-   - Paste contents of `backend/db/migrations/002_alerts_chat_timeline.sql` → Run
+1. Install and run PostgreSQL 16 (locally, or use your self-hosted server)
+2. Create a database and a role for the app, e.g.:
+   ```sql
+   CREATE ROLE cbm WITH LOGIN PASSWORD 'your-password';
+   CREATE DATABASE cloudbudgetmaster OWNER cbm;
+   ```
+3. Build your `DATABASE_URL` from those values, e.g.
+   `postgresql://cbm:your-password@localhost:5432/cloudbudgetmaster`
+4. Apply the schema:
+   ```bash
+   psql "$DATABASE_URL" -f backend/db/schema_selfhosted.sql
+   ```
+   Auth is handled by the backend itself (bcrypt + HS256 JWT), so you also need a
+   `JWT_SECRET` — generate one with `python -c "import secrets; print(secrets.token_urlsafe(48))"`.
 
 ### 2. Groq (AI Chat & Recommendations) — Required for AI features
 
@@ -187,7 +192,7 @@ cp ../.env.example .env
 # Edit .env with your actual API keys
 ```
 
-Run the database migrations in Supabase SQL Editor (see step 1 under "Getting API Keys").
+Apply `backend/db/schema_selfhosted.sql` to your PostgreSQL database (see step 1 under "Getting API Keys").
 
 Start the dev server:
 
@@ -208,7 +213,7 @@ Copy the sample env:
 
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase URL and anon key
+# Edit .env with your backend API base URL (VITE_API_BASE_URL)
 ```
 
 Start the dev server:
@@ -237,8 +242,8 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `SUPABASE_URL` | Yes | Your Supabase project URL |
-| `SUPABASE_SERVICE_KEY` | Yes | Supabase service role key (secret) |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (e.g. `postgresql://cbm:...@localhost:5432/cloudbudgetmaster`) |
+| `JWT_SECRET` | Yes | Secret used to sign HS256 auth JWTs |
 | `CREDENTIAL_ENCRYPTION_KEY` | Yes | Fernet key for encrypting cloud credentials |
 | `GROQ_API_KEY` | Yes* | Groq API key for AI features (*app works without, AI disabled) |
 | `RESEND_API_KEY` | No | Resend API key for email alerts |
@@ -252,8 +257,6 @@ npm run dev
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `VITE_SUPABASE_URL` | Yes | Same Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | Yes | Supabase anon/public key (safe to expose) |
 | `VITE_API_BASE_URL` | No | Backend API URL (default: `http://localhost:8000/v1`) |
 
 ---
@@ -317,30 +320,31 @@ npm run lint                             # ESLint check
 - All cloud API calls are **read-only** — CloudPilot never modifies your infrastructure
 - Cloud credentials are **AES-256 encrypted** (Fernet) before database storage
 - Credentials are **never logged** — masked in all outputs
-- All database tables use **Row Level Security (RLS)** — users can only access their own data
-- JWT authentication via Supabase Auth on every API call
+- Every query is **scoped by `user_id`** in the backend — users can only access their own data
+- JWT authentication (backend-issued HS256, verified on every API call)
 - Fix commands are **displayed, never executed** — you review and run them yourself
 
 ---
 
 ## Deployment
 
-### Frontend (Vercel)
+Production runs on a single **Hostinger VPS** (nginx + gunicorn under systemd).
+See [DEPLOY.md](DEPLOY.md) for the full, verified procedure. In short:
+
+### Frontend (nginx static)
 
 1. Push to GitHub
-2. Connect repo to [Vercel](https://vercel.com)
-3. Set root directory to `frontend`
-4. Add environment variables: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_API_BASE_URL`
-5. Deploy
+2. On the VPS, pull and build: `cd frontend && npm install && npm run build`
+3. nginx serves the built files from `/var/www/cloudbudgetmaster/frontend/dist`
+4. Set `VITE_API_BASE_URL` in `frontend/.env.production`
 
-### Backend (Render)
+### Backend (gunicorn + systemd)
 
-1. Connect repo to [Render](https://render.com)
-2. Create a new **Web Service**
-3. Set build command: `pip install -r backend/requirements.txt`
-4. Set start command: `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
-5. Add all environment variables from `backend/.env`
-6. Deploy
+1. On the VPS, pull and install deps into the venv: `backend/venv/bin/pip install -r backend/requirements.txt`
+2. The backend runs as gunicorn on `127.0.0.1:8001`, managed by the `cbm-api` systemd service
+3. nginx reverse-proxies `api.cloudbudgetmaster.com` to that port
+4. Set all environment variables in `backend/.env`
+5. Restart: `systemctl restart cbm-api`
 
 ---
 

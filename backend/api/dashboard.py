@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Path
 from typing import Optional
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -12,10 +12,10 @@ async def dashboard_summary(
     provider: Optional[str] = Query(None),
     user=Depends(get_current_user),
 ):
-    supabase = get_supabase()
+    db = get_db()
 
     # Get user's connections
-    conn_query = supabase.table("cloud_connections") \
+    conn_query = db.table("cloud_connections") \
         .select("id, provider") \
         .eq("user_id", user["id"])
     if connection_id:
@@ -34,7 +34,7 @@ async def dashboard_summary(
         }
 
     # Get resources for those connections
-    resources = supabase.table("resources") \
+    resources = db.table("resources") \
         .select("provider, monthly_cost_usd, waste_monthly_cost_usd, waste_status, connection_id") \
         .in_("connection_id", conn_ids) \
         .execute()
@@ -72,7 +72,7 @@ async def dashboard_summary(
         p["waste_cost_usd"] = round(p["waste_cost_usd"], 2)
 
     # Cost trend WoW from cost_snapshots
-    wow_percent, wow_usd = _calc_wow_change(supabase, conn_ids)
+    wow_percent, wow_usd = _calc_wow_change(db, conn_ids)
 
     waste_pct = round((total_waste / total_cost * 100), 2) if total_cost > 0 else 0
 
@@ -95,10 +95,10 @@ async def dashboard_trend(
     days: int = Query(30, ge=1, le=90),
     user=Depends(get_current_user),
 ):
-    supabase = get_supabase()
+    db = get_db()
 
     # Get user's connection IDs
-    conn_query = supabase.table("cloud_connections") \
+    conn_query = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"])
     if connection_id:
@@ -112,7 +112,7 @@ async def dashboard_trend(
         return {"data_points": [], "period_start": None, "period_end": None}
 
     # Get cost snapshots
-    snapshots = supabase.table("cost_snapshots") \
+    snapshots = db.table("cost_snapshots") \
         .select("snapshot_date, total_cost_usd") \
         .in_("connection_id", conn_ids) \
         .order("snapshot_date") \
@@ -143,9 +143,9 @@ async def top_waste(
     limit: int = Query(10, ge=1, le=50),
     user=Depends(get_current_user),
 ):
-    supabase = get_supabase()
+    db = get_db()
 
-    conn_query = supabase.table("cloud_connections") \
+    conn_query = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"])
     if connection_id:
@@ -158,7 +158,7 @@ async def top_waste(
     if not conn_ids:
         return {"resources": [], "total_waste_cost_usd": 0}
 
-    resources = supabase.table("resources") \
+    resources = db.table("resources") \
         .select("*") \
         .in_("connection_id", conn_ids) \
         .in_("waste_status", ["unused", "idle"]) \
@@ -180,9 +180,9 @@ async def day_breakdown(
     user=Depends(get_current_user),
 ):
     """Return per-service cost breakdown for a specific day, plus previous day for comparison."""
-    supabase = get_supabase()
+    db = get_db()
 
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -192,7 +192,7 @@ async def day_breakdown(
         return {"date": date, "services": [], "total": 0, "previous_day_total": 0}
 
     # Get snapshots for this date
-    snapshots = supabase.table("cost_snapshots") \
+    snapshots = db.table("cost_snapshots") \
         .select("raw_breakdown, total_cost_usd") \
         .in_("connection_id", conn_ids) \
         .eq("snapshot_date", date) \
@@ -217,7 +217,7 @@ async def day_breakdown(
     prev_total = 0.0
     prev_merged = {}
     if prev_date:
-        prev_snaps = supabase.table("cost_snapshots") \
+        prev_snaps = db.table("cost_snapshots") \
             .select("raw_breakdown, total_cost_usd") \
             .in_("connection_id", conn_ids) \
             .eq("snapshot_date", prev_date) \
@@ -255,9 +255,9 @@ async def cost_forecast(
     user=Depends(get_current_user),
 ):
     """Simple linear regression forecast based on last 30 days of cost data."""
-    supabase = get_supabase()
+    db = get_db()
 
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -266,7 +266,7 @@ async def cost_forecast(
     if not conn_ids:
         return {"current_monthly": 0, "projected_monthly": 0, "trend_direction": "flat", "daily_projections": []}
 
-    snapshots = supabase.table("cost_snapshots") \
+    snapshots = db.table("cost_snapshots") \
         .select("snapshot_date, total_cost_usd") \
         .in_("connection_id", conn_ids) \
         .order("snapshot_date") \
@@ -332,9 +332,9 @@ async def cost_by_tag(
     user=Depends(get_current_user),
 ):
     """Group resources by a tag key and sum costs."""
-    supabase = get_supabase()
+    db = get_db()
 
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -343,7 +343,7 @@ async def cost_by_tag(
     if not conn_ids:
         return {"tag_key": tag_key, "groups": [], "available_tags": []}
 
-    resources = supabase.table("resources") \
+    resources = db.table("resources") \
         .select("monthly_cost_usd, metadata") \
         .in_("connection_id", conn_ids) \
         .execute()
@@ -376,7 +376,7 @@ async def cost_by_tag(
     }
 
 
-def _calc_wow_change(supabase, conn_ids: list) -> tuple[float, float]:
+def _calc_wow_change(db, conn_ids: list) -> tuple[float, float]:
     """Calculate week-over-week cost change from cost_snapshots."""
     try:
         from datetime import datetime, timedelta
@@ -384,13 +384,13 @@ def _calc_wow_change(supabase, conn_ids: list) -> tuple[float, float]:
         week_ago = (today - timedelta(days=7)).isoformat()
         two_weeks_ago = (today - timedelta(days=14)).isoformat()
 
-        this_week = supabase.table("cost_snapshots") \
+        this_week = db.table("cost_snapshots") \
             .select("total_cost_usd") \
             .in_("connection_id", conn_ids) \
             .gte("snapshot_date", week_ago) \
             .execute()
 
-        last_week = supabase.table("cost_snapshots") \
+        last_week = db.table("cost_snapshots") \
             .select("total_cost_usd") \
             .in_("connection_id", conn_ids) \
             .gte("snapshot_date", two_weeks_ago) \

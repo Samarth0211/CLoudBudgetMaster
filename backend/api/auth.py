@@ -2,7 +2,7 @@ import re
 import secrets
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.models.user import RegisterRequest, LoginRequest, AuthResponse
 from backend.dependencies import get_current_user
 from backend.core.email_service import send_verification_email, send_password_reset_email
@@ -58,13 +58,13 @@ async def register(request: Request, body: RegisterRequest):
         raise HTTPException(status_code=400, detail=pw_error)
 
     email = str(body.email).lower().strip()
-    supabase = get_supabase()
+    db = get_db()
 
-    existing = supabase.table("profiles").select("id").eq("email", email).execute()
+    existing = db.table("profiles").select("id").eq("email", email).execute()
     if existing.data:
         raise HTTPException(status_code=409, detail="Email already registered")
 
-    supabase.table("profiles").insert({
+    db.table("profiles").insert({
         "email": email,
         "full_name": body.full_name,
         "password_hash": hash_password(body.password),
@@ -92,9 +92,9 @@ async def verify_otp(request: Request, body: VerifyOTPRequest):
     if not ok:
         raise HTTPException(status_code=400, detail=err)
 
-    supabase = get_supabase()
-    supabase.table("profiles").update({"email_verified": True}).eq("email", email).execute()
-    profile = supabase.table("profiles").select("*").eq("email", email).single().execute()
+    db = get_db()
+    db.table("profiles").update({"email_verified": True}).eq("email", email).execute()
+    profile = db.table("profiles").select("*").eq("email", email).single().execute()
     if not profile.data:
         raise HTTPException(status_code=404, detail="Account not found")
     return _auth_response(profile.data)
@@ -104,8 +104,8 @@ async def verify_otp(request: Request, body: VerifyOTPRequest):
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
     email = str(body.email).lower().strip()
-    supabase = get_supabase()
-    profile = supabase.table("profiles").select("*").eq("email", email).single().execute()
+    db = get_db()
+    profile = db.table("profiles").select("*").eq("email", email).single().execute()
 
     if not profile.data:
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -150,8 +150,8 @@ async def reset_password(request: Request, body: ResetPasswordRequest):
     if not ok:
         raise HTTPException(status_code=400, detail=err)
 
-    supabase = get_supabase()
-    res = supabase.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("email", email).execute()
+    db = get_db()
+    res = db.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("email", email).execute()
     if not res.data:
         raise HTTPException(status_code=400, detail="Account not found")
     return {"message": "Password updated successfully. You can now sign in."}
@@ -163,8 +163,8 @@ class UpdateProfileRequest(BaseModel):
 
 @router.put("/profile")
 async def update_profile(body: UpdateProfileRequest, user=Depends(get_current_user)):
-    supabase = get_supabase()
-    supabase.table("profiles").update({"full_name": body.full_name}).eq("id", user["id"]).execute()
+    db = get_db()
+    db.table("profiles").update({"full_name": body.full_name}).eq("id", user["id"]).execute()
     return {"message": "Profile updated"}
 
 
@@ -182,16 +182,16 @@ async def change_password(request: Request, body: ChangePasswordRequest, user=De
     if not verify_password(body.current_password, user.get("password_hash")):
         raise HTTPException(status_code=401, detail="Current password is incorrect")
 
-    supabase = get_supabase()
-    supabase.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("id", user["id"]).execute()
+    db = get_db()
+    db.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("id", user["id"]).execute()
     return {"message": "Password updated successfully"}
 
 
 @router.delete("/account")
 async def delete_account(user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
     # FK cascades remove connections, resources, alerts, etc.
-    supabase.table("profiles").delete().eq("id", user["id"]).execute()
+    db.table("profiles").delete().eq("id", user["id"]).execute()
     return {"message": "Account deleted"}
 
 

@@ -42,4 +42,4 @@ recorded but not enforced. Update the codes/expiry there as needed.
 
 ## Where payment records live
 - `backend/data/payments.db` (SQLite, on the VPS, git-ignored) — order → user map.
-- The user's `plan` field in the Supabase `profiles` table — source of truth for access.
+- The user's `plan` field in the PostgreSQL `profiles` table — source of truth for access.

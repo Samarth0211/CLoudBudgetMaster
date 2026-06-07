@@ -1,5 +1,5 @@
--- Self-hosted PostgreSQL schema (migrated off Supabase).
--- No auth.users dependency, no RLS — the FastAPI backend owns auth + isolation.
+-- Self-hosted PostgreSQL schema.
+-- No external-auth dependency, no RLS — the FastAPI backend owns auth + isolation.
 -- gen_random_uuid() is built-in on PostgreSQL 13+.
 
 CREATE TABLE IF NOT EXISTS profiles (

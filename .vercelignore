@@ -1,9 +1,0 @@
-frontend/
-frontend/node_modules/
-.git/
-__pycache__/
-*.pyc
-.env
-backend/.env
-tests/
-*.md

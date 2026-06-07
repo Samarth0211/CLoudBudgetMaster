@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from typing import Optional
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -59,8 +59,8 @@ def _enrich_event(event: dict) -> dict:
 
 @router.get("/rules")
 async def list_rules(user=Depends(get_current_user)):
-    supabase = get_supabase()
-    result = supabase.table("alert_rules") \
+    db = get_db()
+    result = db.table("alert_rules") \
         .select("*") \
         .eq("user_id", user["id"]) \
         .order("created_at", desc=True) \
@@ -70,7 +70,7 @@ async def list_rules(user=Depends(get_current_user)):
 
 @router.post("/rules")
 async def create_rule(req: AlertRuleCreate, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
     # Check plan limits
     from backend.config import get_settings
@@ -79,7 +79,7 @@ async def create_rule(req: AlertRuleCreate, user=Depends(get_current_user)):
     limits = settings.plan_limits.get(plan, settings.plan_limits["free"])
     max_rules = limits.get("max_alert_rules", 3)
 
-    existing = supabase.table("alert_rules") \
+    existing = db.table("alert_rules") \
         .select("id", count="exact") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -96,7 +96,7 @@ async def create_rule(req: AlertRuleCreate, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail=f"Invalid rule type: {req.rule_type}")
 
     # Get user's first connection (connection_id is required FK in DB schema)
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .limit(1) \
@@ -109,7 +109,7 @@ async def create_rule(req: AlertRuleCreate, user=Depends(get_current_user)):
             detail="You need at least one cloud connection before creating alert rules. Go to Connections to add one."
         )
 
-    result = supabase.table("alert_rules").insert({
+    result = db.table("alert_rules").insert({
         "user_id": user["id"],
         "connection_id": connection_id,
         "rule_type": db_rule_type,
@@ -125,9 +125,9 @@ async def create_rule(req: AlertRuleCreate, user=Depends(get_current_user)):
 
 @router.put("/rules/{rule_id}")
 async def update_rule(rule_id: str, req: AlertRuleUpdate, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    existing = supabase.table("alert_rules") \
+    existing = db.table("alert_rules") \
         .select("id") \
         .eq("id", rule_id) \
         .eq("user_id", user["id"]) \
@@ -148,7 +148,7 @@ async def update_rule(rule_id: str, req: AlertRuleUpdate, user=Depends(get_curre
     if not updates:
         raise HTTPException(status_code=400, detail="No fields to update")
 
-    result = supabase.table("alert_rules") \
+    result = db.table("alert_rules") \
         .update(updates) \
         .eq("id", rule_id) \
         .execute()
@@ -160,9 +160,9 @@ async def update_rule(rule_id: str, req: AlertRuleUpdate, user=Depends(get_curre
 
 @router.delete("/rules/{rule_id}")
 async def delete_rule(rule_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    existing = supabase.table("alert_rules") \
+    existing = db.table("alert_rules") \
         .select("id") \
         .eq("id", rule_id) \
         .eq("user_id", user["id"]) \
@@ -172,7 +172,7 @@ async def delete_rule(rule_id: str, user=Depends(get_current_user)):
     if not existing.data:
         raise HTTPException(status_code=404, detail="Alert rule not found")
 
-    supabase.table("alert_rules").delete().eq("id", rule_id).execute()
+    db.table("alert_rules").delete().eq("id", rule_id).execute()
     return {"deleted": True}
 
 
@@ -182,8 +182,8 @@ async def list_events(
     dismissed: Optional[bool] = Query(None),
     limit: int = Query(50, ge=1, le=100),
 ):
-    supabase = get_supabase()
-    query = supabase.table("alert_events") \
+    db = get_db()
+    query = db.table("alert_events") \
         .select("*") \
         .eq("user_id", user["id"]) \
         .order("triggered_at", desc=True) \
@@ -198,9 +198,9 @@ async def list_events(
 
 @router.post("/events/{event_id}/dismiss")
 async def dismiss_event(event_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    supabase.table("alert_events") \
+    db.table("alert_events") \
         .update({"acknowledged": True}) \
         .eq("id", event_id) \
         .eq("user_id", user["id"]) \
@@ -211,9 +211,9 @@ async def dismiss_event(event_id: str, user=Depends(get_current_user)):
 
 @router.post("/events/dismiss-all")
 async def dismiss_all(user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    supabase.table("alert_events") \
+    db.table("alert_events") \
         .update({"acknowledged": True}) \
         .eq("user_id", user["id"]) \
         .eq("acknowledged", False) \

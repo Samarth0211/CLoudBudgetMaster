@@ -6,12 +6,9 @@ _ENV_FILE = Path(__file__).resolve().parent / ".env"
 
 
 class Settings(BaseSettings):
-    # Self-hosted Postgres (migrated off Supabase)
+    # Self-hosted PostgreSQL + JWT auth
     database_url: str = ""
     jwt_secret: str = ""
-    # Legacy Supabase fields kept optional so old envs still load (unused now)
-    supabase_url: str = ""
-    supabase_service_key: str = ""
     anthropic_api_key: str = ""
     groq_api_key: str = ""
     resend_api_key: str = ""

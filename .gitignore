@@ -48,4 +48,3 @@ npm-debug.log*
 htmlcov/
 .pytest_cache/
 
-.vercel

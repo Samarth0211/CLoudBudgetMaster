@@ -20,11 +20,11 @@ grounded strictly in official documentation — no hallucination.
 ## 👤 Developer Context
 
 - Solo developer, weekends only (2-3 hrs/week)
-- Stack: Python, FastAPI, React, Supabase, LangChain, Claude API
+- Stack: Python, FastAPI, React, self-hosted PostgreSQL, LangChain, Claude API
 - Cloud experience: AWS (primary), GCP/Vertex AI, Snowflake/Redshift
 - Budget constraint: Total infra must stay on free tiers where possible
 - Payments: Razorpay (India)
-- Deployment: Vercel (frontend), Render (backend)
+- Deployment: Hostinger VPS (nginx + gunicorn/systemd)
 
 ---
 
@@ -76,8 +76,8 @@ cloudpilot/
 │   │   ├── resource.py             # Cloud resource models
 │   │   └── alert.py                # Alert rule + event models
 │   ├── db/
-│   │   ├── client.py               # Supabase client singleton
-│   │   └── migrations/             # SQL migration files
+│   │   ├── client.py               # psycopg2 query-builder (PostgreSQL)
+│   │   └── schema_selfhosted.sql   # Schema applied to PostgreSQL
 │   ├── tests/
 │   │   ├── test_aws_scanner.py
 │   │   ├── test_unused_detection.py
@@ -121,8 +121,7 @@ cloudpilot/
 │   │   │   ├── useResources.js
 │   │   │   └── useAlerts.js
 │   │   ├── lib/
-│   │   │   ├── api.js              # Axios instance + interceptors
-│   │   │   └── supabase.js         # Supabase client for auth
+│   │   │   └── api.js              # Axios instance + interceptors
 │   │   └── styles/
 │   │       └── index.css
 │   ├── public/
@@ -143,13 +142,15 @@ cloudpilot/
 
 ## 🗄️ Database Schema
 
-All tables live in Supabase (Postgres). Use UUIDs for all primary keys.
+All tables live in the self-hosted PostgreSQL database. Use UUIDs for all primary keys.
 
 ```sql
--- Users (managed by Supabase Auth, extended here)
+-- Users (auth owned by the backend: bcrypt password_hash + email_verified)
 CREATE TABLE profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id),
-  email TEXT NOT NULL,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  email_verified BOOLEAN DEFAULT FALSE,
   full_name TEXT,
   plan TEXT DEFAULT 'free' CHECK (plan IN ('free', 'starter', 'growth', 'team')),
   razorpay_customer_id TEXT,
@@ -258,7 +259,7 @@ CREATE INDEX ON doc_chunks USING ivfflat (embedding vector_cosine_ops);
 ## 🔌 API Endpoints
 
 Base URL: `https://api.cloudpilot.app/v1`
-Auth: Bearer JWT (Supabase JWT) on all protected routes.
+Auth: Bearer JWT (backend-issued HS256 JWT) on all protected routes.
 
 ```
 AUTH
@@ -469,8 +470,8 @@ def decrypt_credentials(encrypted: str, key: str) -> dict:
 
 ```bash
 # backend/.env
-SUPABASE_URL=
-SUPABASE_SERVICE_KEY=              # Server-side only, never expose to frontend
+DATABASE_URL=                      # postgresql://cbm:...@localhost:5432/cloudbudgetmaster
+JWT_SECRET=                        # signs HS256 auth JWTs, generate once, never change
 ANTHROPIC_API_KEY=
 RESEND_API_KEY=
 RAZORPAY_KEY_ID=
@@ -480,8 +481,6 @@ FRONTEND_URL=https://cloudpilot.app
 ENVIRONMENT=development            # 'development' | 'production'
 
 # frontend/.env
-VITE_SUPABASE_URL=
-VITE_SUPABASE_ANON_KEY=           # Public anon key only, never service key
 VITE_API_BASE_URL=https://api.cloudpilot.app/v1
 ```
 
@@ -491,7 +490,7 @@ VITE_API_BASE_URL=https://api.cloudpilot.app/v1
 
 | Weekend | Goal | Done When |
 |---------|------|-----------|
-| 1 | Project setup + Auth | User can register, login, JWT works, Supabase connected |
+| 1 | Project setup + Auth | User can register, login, JWT works, PostgreSQL connected |
 | 2 | AWS Cost Explorer integration | Dashboard shows real AWS cost data for connected account |
 | 3 | AWS unused resource detection | Resources page shows unused EC2, EBS, EKS with waste reason |
 | 4 | Alert engine + email | User gets email when bill spikes >20% week-over-week |

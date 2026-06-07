@@ -1,16 +1,16 @@
 """GCP Scanner — discovers resources and detects waste."""
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.services.gcp.billing import get_gcp_costs
 from backend.services.gcp.unused import detect_unused_gcp_resources
 
 
-async def scan_gcp(connection_id: str, credentials: dict, user_id: str, supabase=None):
+async def scan_gcp(connection_id: str, credentials: dict, user_id: str, db=None):
     """Orchestrate a full GCP scan: billing + resource discovery + waste detection."""
-    if supabase is None:
-        supabase = get_supabase()
+    if db is None:
+        db = get_db()
 
     # Update connection status
-    supabase.table("cloud_connections") \
+    db.table("cloud_connections") \
         .update({"status": "scanning"}) \
         .eq("id", connection_id) \
         .execute()
@@ -23,7 +23,7 @@ async def scan_gcp(connection_id: str, credentials: dict, user_id: str, supabase
             cost_data = await get_gcp_costs(credentials)
             if cost_data:
                 # Store cost snapshot
-                supabase.table("cost_snapshots").insert({
+                db.table("cost_snapshots").insert({
                     "connection_id": connection_id,
                     "snapshot_date": cost_data["date"],
                     "total_cost_usd": cost_data["total"],
@@ -42,7 +42,7 @@ async def scan_gcp(connection_id: str, credentials: dict, user_id: str, supabase
                 resource["provider"] = "gcp"
 
                 # Upsert resource
-                supabase.table("resources").upsert(
+                db.table("resources").upsert(
                     resource,
                     on_conflict="connection_id,resource_id"
                 ).execute()
@@ -52,7 +52,7 @@ async def scan_gcp(connection_id: str, credentials: dict, user_id: str, supabase
 
         # Update connection status
         from datetime import datetime
-        supabase.table("cloud_connections") \
+        db.table("cloud_connections") \
             .update({
                 "status": "active",
                 "last_scanned_at": datetime.utcnow().isoformat(),
@@ -62,7 +62,7 @@ async def scan_gcp(connection_id: str, credentials: dict, user_id: str, supabase
             .execute()
 
     except Exception as e:
-        supabase.table("cloud_connections") \
+        db.table("cloud_connections") \
             .update({
                 "status": "error",
                 "error_message": str(e)[:500],

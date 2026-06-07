@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Query
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/resources", tags=["resources"])
@@ -82,10 +82,10 @@ async def list_resources(
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
 ):
-    supabase = get_supabase()
+    db = get_db()
 
     # Get user's connection IDs
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -94,7 +94,7 @@ async def list_resources(
     if not conn_ids:
         return {"resources": [], "total": 0, "page": page, "page_size": page_size, "total_pages": 0}
 
-    query = supabase.table("resources") \
+    query = db.table("resources") \
         .select("*", count="exact") \
         .in_("connection_id", conn_ids)
 
@@ -142,16 +142,16 @@ async def list_resources(
 
 @router.get("/{resource_id}")
 async def get_resource(resource_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
     # Verify ownership via connection
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
-    resource = supabase.table("resources") \
+    resource = db.table("resources") \
         .select("*") \
         .eq("id", resource_id) \
         .in_("connection_id", conn_ids) \
@@ -172,15 +172,15 @@ async def get_resource(resource_id: str, user=Depends(get_current_user)):
 @router.get("/{resource_id}/timeline")
 async def resource_timeline(resource_id: str, user=Depends(get_current_user)):
     """Get historical snapshots for a resource (for timeline chart)."""
-    supabase = get_supabase()
+    db = get_db()
 
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
-    resource = supabase.table("resources") \
+    resource = db.table("resources") \
         .select("id") \
         .eq("id", resource_id) \
         .in_("connection_id", conn_ids) \
@@ -190,7 +190,7 @@ async def resource_timeline(resource_id: str, user=Depends(get_current_user)):
     if not resource.data:
         raise HTTPException(status_code=404, detail="Resource not found")
 
-    snapshots = supabase.table("resource_snapshots") \
+    snapshots = db.table("resource_snapshots") \
         .select("status, metrics, snapshot_date") \
         .eq("resource_id", resource_id) \
         .order("snapshot_date") \
@@ -205,15 +205,15 @@ async def get_fix_commands(resource_id: str, user=Depends(get_current_user)):
     """Get AWS CLI and Terraform fix commands for a wasteful resource."""
     from backend.services.ai.fix_commands import generate_fix_commands
 
-    supabase = get_supabase()
+    db = get_db()
 
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
-    resource = supabase.table("resources") \
+    resource = db.table("resources") \
         .select("*") \
         .eq("id", resource_id) \
         .in_("connection_id", conn_ids) \
@@ -231,16 +231,16 @@ async def get_ai_recommendation(resource_id: str, user=Depends(get_current_user)
     """Generate AI-powered recommendation for a wasteful resource."""
     from backend.services.ai.recommendations import generate_recommendation
 
-    supabase = get_supabase()
+    db = get_db()
 
     # Verify ownership
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
-    resource = supabase.table("resources") \
+    resource = db.table("resources") \
         .select("*") \
         .eq("id", resource_id) \
         .in_("connection_id", conn_ids) \
@@ -266,7 +266,7 @@ async def get_ai_recommendation(resource_id: str, user=Depends(get_current_user)
 
     # Cache in metadata
     meta["ai_recommendation"] = ai_rec
-    supabase.table("resources") \
+    db.table("resources") \
         .update({"metadata": meta}) \
         .eq("id", resource_id) \
         .execute()

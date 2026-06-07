@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
@@ -9,20 +9,20 @@ router = APIRouter(prefix="/assistant", tags=["assistant"])
 CHAT_LIMITS = {"free": 3, "pro": 15, "enterprise": 50}
 
 
-def _get_chat_usage(supabase, user_id: str) -> dict:
+def _get_chat_usage(db, user_id: str) -> dict:
     """Get chat usage from profiles table (chat_count, chat_month columns)."""
     now = datetime.now(timezone.utc)
     month_key = now.strftime("%Y-%m")
 
     try:
-        result = supabase.table("profiles").select("chat_count, chat_month").eq("id", user_id).single().execute()
+        result = db.table("profiles").select("chat_count, chat_month").eq("id", user_id).single().execute()
         data = result.data or {}
         count = data.get("chat_count") or 0
         month = data.get("chat_month") or ""
 
         if month != month_key:
             # New month — reset counter
-            supabase.table("profiles").update({"chat_count": 0, "chat_month": month_key}).eq("id", user_id).execute()
+            db.table("profiles").update({"chat_count": 0, "chat_month": month_key}).eq("id", user_id).execute()
             return {"count": 0, "month": month_key}
 
         return {"count": count, "month": month_key}
@@ -31,10 +31,10 @@ def _get_chat_usage(supabase, user_id: str) -> dict:
         return {"count": 0, "month": month_key}
 
 
-def _increment_chat_usage(supabase, user_id: str, current_count: int, month_key: str):
+def _increment_chat_usage(db, user_id: str, current_count: int, month_key: str):
     """Increment chat usage counter in profiles table."""
     try:
-        supabase.table("profiles").update({
+        db.table("profiles").update({
             "chat_count": current_count + 1,
             "chat_month": month_key,
         }).eq("id", user_id).execute()
@@ -45,9 +45,9 @@ def _increment_chat_usage(supabase, user_id: str, current_count: int, month_key:
 def _check_chat_limit(user):
     plan = user.get("plan", "free")
     limit = CHAT_LIMITS.get(plan, 3)
-    supabase = get_supabase()
+    db = get_db()
 
-    usage = _get_chat_usage(supabase, user["id"])
+    usage = _get_chat_usage(db, user["id"])
 
     if usage["count"] >= limit:
         raise HTTPException(
@@ -55,7 +55,7 @@ def _check_chat_limit(user):
             detail=f"Chat limit reached ({limit}/month on {plan} plan). Upgrade for more."
         )
 
-    _increment_chat_usage(supabase, user["id"], usage["count"], usage["month"])
+    _increment_chat_usage(db, user["id"], usage["count"], usage["month"])
     return usage["count"] + 1, limit
 
 
@@ -74,8 +74,8 @@ async def chat_usage(user=Depends(get_current_user)):
     """Return chat usage for the current month."""
     plan = user.get("plan", "free")
     limit = CHAT_LIMITS.get(plan, 3)
-    supabase = get_supabase()
-    usage = _get_chat_usage(supabase, user["id"])
+    db = get_db()
+    usage = _get_chat_usage(db, user["id"])
     return {"used": usage["count"], "limit": limit, "plan": plan}
 
 
@@ -86,10 +86,10 @@ async def chat(req: ChatRequest, user=Depends(get_current_user)):
 
     used, limit = _check_chat_limit(user)
 
-    supabase = get_supabase()
+    db = get_db()
 
     # Gather user's cloud context for the AI
-    conns = supabase.table("cloud_connections") \
+    conns = db.table("cloud_connections") \
         .select("id") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -104,7 +104,7 @@ async def chat(req: ChatRequest, user=Depends(get_current_user)):
     }
 
     if conn_ids:
-        resources = supabase.table("resources") \
+        resources = db.table("resources") \
             .select("resource_name, resource_type, monthly_cost_usd, waste_monthly_cost_usd, waste_status, waste_reason") \
             .in_("connection_id", conn_ids) \
             .execute()
@@ -117,7 +117,7 @@ async def chat(req: ChatRequest, user=Depends(get_current_user)):
                 context["unused_resources"] += 1
 
         # Top wasters
-        wasters = supabase.table("resources") \
+        wasters = db.table("resources") \
             .select("resource_name, resource_type, waste_monthly_cost_usd, waste_reason") \
             .in_("connection_id", conn_ids) \
             .in_("waste_status", ["unused", "idle"]) \

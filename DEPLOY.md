@@ -1,6 +1,6 @@
 # Deploying CloudBudgetMaster
 
-Production runs on a **Hostinger VPS** (not Vercel/Render). This is the real,
+Production runs on a **Hostinger VPS** (nginx + gunicorn/systemd). This is the real,
 verified deploy procedure.
 
 ## Server facts
@@ -47,10 +47,13 @@ If you add a new dependency, `import`-check it in the venv before restarting to
 avoid a boot crash: `backend/venv/bin/python -c "import <pkg>"`.
 
 ## Notes / gotchas
+- **`frontend/.env.production` is required on the server** (git-ignored). It must
+  contain `VITE_API_BASE_URL=https://api.cloudbudgetmaster.com/v1`. If missing, the
+  Vite build silently falls back to `http://localhost:8000` and the whole app
+  breaks in the browser. After a frontend build, verify the live bundle contains
+  the real API host (see the verify command in the frontend deploy section).
 - **Brand fonts** (Inter + JetBrains Mono) load via `<link>` in `frontend/index.html`,
   **not** a CSS `@import` — PostCSS drops a font `@import` placed after the Tailwind
   import, so the fonts silently fail. Keep them in `index.html`.
-- This repo has stale **Vercel** artifacts (`vercel.json`, `.vercelignore`, `api/index.py`)
-  from before the VPS move — they are unused.
 - Pushing needs write access to `Samarth0211/CLoudBudgetMaster` (the `Samarth0211`
   GitHub account, not `samarth-ship-it`).

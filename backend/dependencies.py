@@ -1,5 +1,5 @@
 from fastapi import HTTPException, Request
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.core.security import decode_token
 
 
@@ -14,8 +14,8 @@ async def get_current_user(request: Request):
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    supabase = get_supabase()
-    profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+    db = get_db()
+    profile = db.table("profiles").select("*").eq("id", user_id).single().execute()
     if not profile.data:
         raise HTTPException(status_code=404, detail="User profile not found")
 

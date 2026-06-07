@@ -1,10 +1,9 @@
 """
-Self-hosted PostgreSQL client with a Supabase-postgrest-compatible surface.
+Self-hosted PostgreSQL client with a postgrest-style query-builder surface.
 
-`get_supabase()` returns an object whose `.table(name)...execute()` chain mirrors
-the supabase-py query builder the rest of the codebase already uses — so the data
-files didn't have to change when we migrated off Supabase. Backed by psycopg2
-against the local Postgres on the VPS.
+`get_db()` returns an object whose `.table(name)...execute()` chain mirrors the
+query builder the rest of the codebase already used — so the data files didn't
+have to change. Backed by psycopg2 against the local Postgres on the VPS.
 """
 import uuid
 import datetime
@@ -210,8 +209,8 @@ class _Client:
 _client: _Client | None = None
 
 
-def get_supabase() -> _Client:
-    """Kept the name for drop-in compatibility; returns the local-Postgres client."""
+def get_db() -> _Client:
+    """Return the process-wide local-Postgres client (lazy singleton)."""
     global _client
     if _client is None:
         _client = _Client()

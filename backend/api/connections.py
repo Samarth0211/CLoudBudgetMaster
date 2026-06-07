@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Depends
-from backend.db.client import get_supabase
+from backend.db.client import get_db
 from backend.dependencies import get_current_user
 from backend.core.encryption import encrypt_credentials, decrypt_credentials
 from backend.models.connection import (
@@ -16,8 +16,8 @@ VALID_PROVIDERS = {"aws", "gcp", "azure", "snowflake"}
 
 @router.get("", response_model=ConnectionListResponse)
 async def list_connections(user=Depends(get_current_user)):
-    supabase = get_supabase()
-    result = supabase.table("cloud_connections") \
+    db = get_db()
+    result = db.table("cloud_connections") \
         .select("id, provider, display_name, status, last_scanned_at, error_message, created_at") \
         .eq("user_id", user["id"]) \
         .order("created_at", desc=True) \
@@ -37,8 +37,8 @@ async def create_connection(body: CreateConnectionRequest, user=Depends(get_curr
     plan = user.get("plan", "free")
     max_connections = settings.plan_limits.get(plan, {}).get("max_connections", 1)
 
-    supabase = get_supabase()
-    existing = supabase.table("cloud_connections") \
+    db = get_db()
+    existing = db.table("cloud_connections") \
         .select("id", count="exact") \
         .eq("user_id", user["id"]) \
         .execute()
@@ -61,7 +61,7 @@ async def create_connection(body: CreateConnectionRequest, user=Depends(get_curr
         "status": "active",
     }
 
-    result = supabase.table("cloud_connections").insert(row).execute()
+    result = db.table("cloud_connections").insert(row).execute()
     if not result.data:
         raise HTTPException(status_code=500, detail="Failed to create connection")
 
@@ -79,10 +79,10 @@ async def create_connection(body: CreateConnectionRequest, user=Depends(get_curr
 
 @router.delete("/{connection_id}")
 async def delete_connection(connection_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
     # Verify ownership
-    conn = supabase.table("cloud_connections") \
+    conn = db.table("cloud_connections") \
         .select("id") \
         .eq("id", connection_id) \
         .eq("user_id", user["id"]) \
@@ -95,19 +95,19 @@ async def delete_connection(connection_id: str, user=Depends(get_current_user)):
     # Delete related data first (ignore errors for tables that may not exist yet)
     for table in ["resources", "cost_snapshots", "alert_rules"]:
         try:
-            supabase.table(table).delete().eq("connection_id", connection_id).execute()
+            db.table(table).delete().eq("connection_id", connection_id).execute()
         except Exception:
             pass
-    supabase.table("cloud_connections").delete().eq("id", connection_id).execute()
+    db.table("cloud_connections").delete().eq("id", connection_id).execute()
 
     return {"message": "Connection deleted", "id": connection_id}
 
 
 @router.post("/{connection_id}/scan")
 async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    conn = supabase.table("cloud_connections") \
+    conn = db.table("cloud_connections") \
         .select("*") \
         .eq("id", connection_id) \
         .eq("user_id", user["id"]) \
@@ -121,7 +121,7 @@ async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=429, detail="Scan already in progress")
 
     # Mark as scanning
-    supabase.table("cloud_connections") \
+    db.table("cloud_connections") \
         .update({"status": "scanning"}) \
         .eq("id", connection_id) \
         .execute()
@@ -132,12 +132,12 @@ async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
         credentials = decrypt_credentials(conn.data["credentials_encrypted"])
         await run_scan(connection_id, conn.data["provider"], credentials, user["id"])
 
-        supabase.table("cloud_connections") \
+        db.table("cloud_connections") \
             .update({"status": "active", "last_scanned_at": datetime.now(timezone.utc).isoformat(), "error_message": None}) \
             .eq("id", connection_id) \
             .execute()
     except Exception as e:
-        supabase.table("cloud_connections") \
+        db.table("cloud_connections") \
             .update({"status": "error", "error_message": str(e)[:500]}) \
             .eq("id", connection_id) \
             .execute()
@@ -148,9 +148,9 @@ async def trigger_scan(connection_id: str, user=Depends(get_current_user)):
 
 @router.get("/{connection_id}/status", response_model=ConnectionStatusResponse)
 async def connection_status(connection_id: str, user=Depends(get_current_user)):
-    supabase = get_supabase()
+    db = get_db()
 
-    conn = supabase.table("cloud_connections") \
+    conn = db.table("cloud_connections") \
         .select("id, provider, display_name, status, last_scanned_at, error_message") \
         .eq("id", connection_id) \
         .eq("user_id", user["id"]) \
@@ -161,7 +161,7 @@ async def connection_status(connection_id: str, user=Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Connection not found")
 
     # Get resource stats
-    resources = supabase.table("resources") \
+    resources = db.table("resources") \
         .select("monthly_cost_usd, waste_monthly_cost_usd", count="exact") \
         .eq("connection_id", connection_id) \
         .execute()

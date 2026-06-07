@@ -29,19 +29,15 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
 
-# CORS
+# CORS — production site + local dev
 _origins = [
     settings.frontend_url,
     "http://localhost:5173",
 ]
-# Allow any *.vercel.app origin in production
-if settings.environment == "production":
-    _origins.append("https://*.vercel.app")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

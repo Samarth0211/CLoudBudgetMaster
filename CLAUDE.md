@@ -8,10 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Tech Stack
 
-- **Backend:** Python 3.12, FastAPI, Supabase (Postgres + pgvector + Auth), Resend (email), Razorpay (payments)
-- **Frontend:** React 19, Vite, Tailwind CSS v4, React Router, Axios, Recharts, Supabase JS client
+- **Backend:** Python 3.12, FastAPI, self-hosted PostgreSQL 16 + JWT auth, Resend (email), Razorpay (payments)
+- **Frontend:** React 19, Vite, Tailwind CSS v4, React Router, Axios, Recharts
 - **AI:** Claude API (Anthropic) for RAG answers, OpenAI embeddings for doc search
-- **Deploy:** Vercel (frontend), Render (backend), GitHub Actions (cron scans, doc crawler)
+- **Deploy:** Hostinger VPS (nginx + gunicorn/systemd), GitHub Actions (cron scans, doc crawler)
 
 ## Build & Run Commands
 
@@ -32,14 +32,14 @@ npm run build                            # Production build
 
 - Backend entry: `backend/main.py` — FastAPI app, CORS config, router registration
 - Config: `backend/config.py` — pydantic-settings loading from `.env`
-- DB: `backend/db/client.py` — Supabase client singleton; all tables use RLS
-- Auth: `backend/dependencies.py` — `get_current_user` dependency validates JWT via Supabase
+- DB: `backend/db/client.py` — psycopg2 query-builder over self-hosted PostgreSQL; queries scoped by `user_id`
+- Auth: `backend/dependencies.py` — `get_current_user` dependency validates backend-issued HS256 JWT (`backend/core/security.py`)
 - API routes: `backend/api/` — one file per feature (auth, connections, resources, alerts, dashboard, webhooks, assistant)
 - Cloud scanners: `backend/services/{aws,gcp,azure,snowflake}/` — each has scanner.py (orchestrator), billing/cost module, unused.py (detection)
 - Core: `backend/core/` — scanner_runner.py (dispatch), alert_engine.py, email_service.py, waste_calculator.py
 - RAG: `backend/rag/` — crawler.py, chunker.py, embedder.py, retriever.py
 - Frontend: `frontend/src/` — pages/, components/, hooks/, lib/ structure
-- SQL migrations: `backend/db/migrations/` — run manually in Supabase SQL Editor
+- DB schema: `backend/db/schema_selfhosted.sql` — apply manually to your PostgreSQL database
 
 ## Key Rules (from ai_rules.md)
 
