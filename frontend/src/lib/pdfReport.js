@@ -95,24 +95,70 @@ function rankedBars(ctx, items, color) {
   ctx.y += 6
 }
 
+// Round a value up to a clean axis maximum (1/2/2.5/5 x 10^n).
+function niceCeil(v) {
+  if (!(v > 0)) return 1
+  const base = Math.pow(10, Math.floor(Math.log10(v)))
+  const f = v / base
+  const nf = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10
+  return nf * base
+}
+
+/** Row of labelled stat cards: [[label, value, color?], ...]. */
+function statStrip(ctx, items) {
+  const { doc, W } = ctx
+  ensure(ctx, 56)
+  const n = items.length, gap = 10, cw = (W - 2 * MARGIN - (n - 1) * gap) / n
+  items.forEach((it, i) => {
+    const x = MARGIN + i * (cw + gap)
+    doc.setFillColor(247, 248, 250); doc.roundedRect(x, ctx.y, cw, 44, 4, 4, 'F')
+    doc.setTextColor(...GREY); doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.text(clean(it[0]).toUpperCase(), x + 8, ctx.y + 16, { maxWidth: cw - 12 })
+    doc.setTextColor(...(it[2] || INK)); doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.text(clean(it[1]), x + 8, ctx.y + 34)
+  })
+  ctx.y += 44 + 16
+}
+
+// Daily-cost bar chart with a real y-axis, gridlines, value + date labels.
 function drawTrendChart(ctx, points) {
   const { doc, W } = ctx
-  const h = 120, x0 = MARGIN, w = W - 2 * MARGIN
-  ensure(ctx, h + 30)
+  const x0 = MARGIN + 46, plotW = W - MARGIN - x0, plotH = 150
+  ensure(ctx, plotH + 40)
   const top = ctx.y
-  doc.setDrawColor(232, 232, 232); doc.setFillColor(250, 250, 251); doc.rect(x0, top, w, h, 'FD')
-  const max = Math.max(...points.map(p => p.total_cost_usd || 0), 1)
-  const n = points.length || 1, bw = w / n
+  const vals = points.map(p => p.total_cost_usd || 0)
+  const ymax = niceCeil(Math.max(...vals, 1) * 1.08)
+  const N = 4
+  // horizontal gridlines + y-axis dollar labels
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5)
+  for (let i = 0; i <= N; i++) {
+    const gy = top + plotH - (i / N) * plotH
+    const baseline = i === 0
+    doc.setDrawColor(baseline ? 150 : 230, baseline ? 150 : 230, baseline ? 150 : 230)
+    doc.setLineWidth(baseline ? 0.8 : 0.4)
+    doc.line(x0, gy, x0 + plotW, gy)
+    doc.setTextColor(...GREY); doc.text(money0((i / N) * ymax), x0 - 6, gy + 2.4, { align: 'right' })
+  }
+  doc.setLineWidth(0.5)
+  // bars (peak day highlighted darker)
+  const n = points.length, slot = plotW / n, bw = Math.min(slot * 0.62, 13)
+  let peakI = 0; vals.forEach((v, i) => { if (v > vals[peakI]) peakI = i })
   points.forEach((p, i) => {
-    const bh = ((p.total_cost_usd || 0) / max) * (h - 22)
-    doc.setFillColor(...ORANGE); doc.rect(x0 + i * bw + bw * 0.18, top + h - bh - 4, Math.max(bw * 0.64, 1), bh, 'F')
+    const bh = (vals[i] / ymax) * plotH
+    const bx = x0 + i * slot + (slot - bw) / 2
+    if (i === peakI) doc.setFillColor(236, 114, 17); else doc.setFillColor(...ORANGE)
+    doc.rect(bx, top + plotH - bh, bw, Math.max(bh, 0.4), 'F')
   })
-  doc.setFontSize(7); doc.setTextColor(...GREY); doc.text(money0(max), x0 + 5, top + 11); doc.text('$0', x0 + 5, top + h - 5)
-  ctx.y = top + h + 6
-  doc.setFontSize(7.5)
-  if (points[0]) doc.text(points[0].date, x0, ctx.y + 7)
-  if (points[n - 1]) doc.text(points[n - 1].date, x0 + w, ctx.y + 7, { align: 'right' })
-  ctx.y += 22
+  // peak value label
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7); doc.setTextColor(...INK)
+  doc.text(money0(vals[peakI]), x0 + peakI * slot + slot / 2, top + plotH - (vals[peakI] / ymax) * plotH - 4, { align: 'center' })
+  // x-axis date ticks (~6 evenly spaced)
+  doc.setFont('helvetica', 'normal'); doc.setTextColor(...GREY); doc.setFontSize(7)
+  const step = Math.max(1, Math.round(n / 6))
+  for (let i = 0; i < n; i += step) {
+    const d = new Date(points[i].date)
+    const lbl = isNaN(d.getTime()) ? clean(String(points[i].date)) : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    doc.text(lbl, x0 + i * slot + slot / 2, top + plotH + 12, { align: 'center' })
+  }
+  ctx.y = top + plotH + 24
 }
 
 export async function generateCostReport({ summary, trend = [], connections = [], resources = [], services = [], forecast, tags, account, insights }) {
@@ -213,16 +259,37 @@ export async function generateCostReport({ summary, trend = [], connections = []
   }
 
   // Cost trend
-  if (trend.length) { sectionTitle(ctx, '30-Day Cost Trend', null, true); drawTrendChart(ctx, trend) }
+  if (trend.length) {
+    sectionTitle(ctx, '30-Day Cost Trend', null, true)
+    drawTrendChart(ctx, trend)
+    const tv = trend.map(p => p.total_cost_usd || 0)
+    const ttotal = tv.reduce((a, b) => a + b, 0)
+    let pk = 0; tv.forEach((v, i) => { if (v > tv[pk]) pk = i })
+    const pkd = new Date(trend[pk].date)
+    const pkl = isNaN(pkd.getTime()) ? '' : ' (' + pkd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ')'
+    statStrip(ctx, [
+      ['30-Day Total', money0(ttotal)],
+      ['Daily Average', money(ttotal / (tv.length || 1))],
+      ['Peak Day' + pkl, money(tv[pk]), [236, 114, 17]],
+      ['Days Tracked', String(tv.length)],
+    ])
+  }
 
   // Cost allocation by tag
   const groups = tags?.groups || []
   if (groups.length) {
     const tagTotal = groups.reduce((s, g) => s + g.total_cost, 0)
     const untagged = groups.find(g => g.tag_value === 'Untagged')
-    const taggedPct = tagTotal > 0 ? (((tagTotal - (untagged?.total_cost || 0)) / tagTotal) * 100).toFixed(0) : 0
-    sectionTitle(ctx, 'Cost Allocation', `by ${tags.tag_key} · tagging coverage ${taggedPct}%`, true)
-    rankedBars(ctx, groups.slice(0, 8).map(g => ({ label: g.tag_value, value: g.total_cost })), BLUE)
+    const taggedPct = tagTotal > 0 ? Math.round(((tagTotal - (untagged?.total_cost || 0)) / tagTotal) * 100) : 0
+    sectionTitle(ctx, 'Cost Allocation', `by ${tags.tag_key}  -  tagging coverage ${taggedPct}%`, true)
+    rankedBars(ctx, groups.slice(0, 8).map(g => ({ label: g.tag_value, value: g.total_cost, percent: tagTotal > 0 ? Math.round((g.total_cost / tagTotal) * 100) : 0 })), BLUE)
+    ctx.y += 4
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(70, 70, 70)
+    const note = taggedPct < 50
+      ? `Only ${taggedPct}% of spend carries the "${tags.tag_key}" tag, so costs cannot yet be attributed to a team, project, or environment. Tagging resources is the first step toward accountable cloud spend and accurate showback/chargeback.`
+      : `${taggedPct}% of spend is tagged with "${tags.tag_key}", enabling cost attribution across teams. Aim for 90%+ coverage to fully allocate every dollar.`
+    const nl = doc.splitTextToSize(clean(note), W - 2 * MARGIN)
+    doc.text(nl, MARGIN, ctx.y); ctx.y += nl.length * 13 + 8
   }
 
   // Top resources by cost
