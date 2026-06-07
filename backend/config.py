@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     admin_emails: str = ""  # comma-separated emails allowed to manage blog posts
     site_url: str = "https://cloudbudgetmaster.com"  # canonical public origin (no trailing slash)
     blog_dist_dir: str = ""  # where to write static blog HTML (the nginx-served dist/); empty = skip file gen
+    # Search-engine auto-ping on publish
+    indexnow_key: str = ""  # IndexNow key (Bing/Yandex). A <key>.txt is served at the site root.
+    google_indexing_sa_file: str = ""  # path to a Google service-account JSON to enable the Indexing API ping
 
     # Plan limits
     plan_limits: dict = {

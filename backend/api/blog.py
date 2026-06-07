@@ -9,8 +9,10 @@ from typing import Optional
 from datetime import datetime, timezone
 
 from backend.db.client import get_db
+from backend.config import get_settings
 from backend.dependencies import require_admin
 from backend.services.blog_render import regenerate, slugify, reading_time, CATEGORIES
+from backend.services.search_ping import notify
 
 router = APIRouter(prefix="/blog", tags=["blog"])
 
@@ -38,6 +40,14 @@ def _regen(db):
         regenerate(db)
     except Exception as e:  # noqa: BLE001 — static regen must never fail the API
         print(f"[blog] static regen failed: {e}")
+
+
+def _ping_if_published(post: dict):
+    """Notify search engines about a newly published/updated post."""
+    if not post or post.get("status") != "published":
+        return
+    base = get_settings().site_url
+    notify([f"{base}/blog/{post['slug']}", f"{base}/blog"])
 
 
 def _unique_slug(db, base: str, exclude_id: Optional[str] = None) -> str:
@@ -117,7 +127,9 @@ async def admin_create(body: PostIn, admin=Depends(require_admin)):
         row["published_at"] = _now()
     db.table("blog_posts").insert(row).execute()
     _regen(db)
-    return _get_by(db, "slug", slug)
+    out = _get_by(db, "slug", slug)
+    _ping_if_published(out)
+    return out
 
 
 @router.put("/admin/posts/{post_id}")
@@ -141,7 +153,9 @@ async def admin_update(post_id: str, body: PostIn, admin=Depends(require_admin))
         upd["published_at"] = _now()
     db.table("blog_posts").update(upd).eq("id", post_id).execute()
     _regen(db)
-    return _get_by(db, "id", post_id)
+    out = _get_by(db, "id", post_id)
+    _ping_if_published(out)
+    return out
 
 
 @router.delete("/admin/posts/{post_id}")

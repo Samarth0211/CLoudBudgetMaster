@@ -24,12 +24,13 @@ import Terms from './pages/Terms'
 import ChatWidget from './components/ChatWidget'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingSpinner from './components/shared/LoadingSpinner'
+import NoIndex from './components/shared/NoIndex'
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return <div className="flex min-h-screen items-center justify-center bg-[#0B1220]"><LoadingSpinner size="lg" /></div>
   if (!user) return <Navigate to="/login" replace />
-  return children
+  return <><NoIndex />{children}</>
 }
 
 function PublicRoute({ children }) {
@@ -57,8 +58,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
-      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/login" element={<PublicRoute><NoIndex /><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><NoIndex /><Register /></PublicRoute>} />
       <Route path="/dashboard" element={
         <ProtectedRoute>
           <AppLayout><Dashboard /></AppLayout>

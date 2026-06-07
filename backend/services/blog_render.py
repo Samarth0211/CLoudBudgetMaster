@@ -292,4 +292,10 @@ def regenerate(db) -> dict:
     with open(os.path.join(dist, "robots.txt"), "w", encoding="utf-8") as f:
         f.write(render_robots())
 
+    # IndexNow ownership key file (served at /<key>.txt)
+    key = get_settings().indexnow_key
+    if key:
+        with open(os.path.join(dist, f"{key}.txt"), "w", encoding="utf-8") as f:
+            f.write(key)
+
     return {"written": len(posts), "skipped": False}
