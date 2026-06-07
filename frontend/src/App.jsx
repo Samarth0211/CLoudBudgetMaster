@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
 import Sidebar from './components/layout/Sidebar'
@@ -41,11 +42,13 @@ function PublicRoute({ children }) {
 }
 
 function AppLayout({ children }) {
+  const [navOpen, setNavOpen] = useState(false)
   return (
     <div className="min-h-screen bg-[#0B1220]">
-      <Sidebar />
-      <Navbar />
-      <main className="ml-60 pt-14 p-6">
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+      {navOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setNavOpen(false)} aria-hidden />}
+      <Navbar onMenu={() => setNavOpen(true)} />
+      <main className="md:ml-60 pt-14 p-4 sm:p-6">
         {children}
       </main>
       <ChatWidget />

@@ -16,14 +16,14 @@ const NAV_ITEMS = [
   { path: '/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
 ]
 
-function NavSection({ title, items }) {
+function NavSection({ title, items, onItemClick }) {
   return (
     <>
       <div className="mb-2 mt-7 first:mt-0 px-3 text-[10.5px] font-semibold uppercase tracking-[0.1em] text-slate-500">
         {title}
       </div>
       {items.map(({ path, label, icon }) => (
-        <NavLink key={path} to={path}
+        <NavLink key={path} to={path} onClick={onItemClick}
           className={({ isActive }) =>
             `flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium mb-0.5 transition-colors ${
               isActive
@@ -41,12 +41,12 @@ function NavSection({ title, items }) {
   )
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose }) {
   const navigate = useNavigate()
   const { user } = useAuth()
 
   return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220]">
+    <aside className={`fixed left-0 top-0 z-50 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220] transition-transform duration-200 md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 border-b border-slate-800 px-4">
         <BrandLogo className="h-7 w-7" />
@@ -55,21 +55,21 @@ export default function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2 py-3">
-        <NavSection title="Overview" items={NAV_ITEMS.slice(0, 2)} />
-        <NavSection title="Manage" items={NAV_ITEMS.slice(2, 6)} />
-        {user?.is_admin && <NavSection title="Admin" items={ADMIN_ITEMS} />}
-        <NavSection title="Account" items={NAV_ITEMS.slice(6)} />
+        <NavSection title="Overview" items={NAV_ITEMS.slice(0, 2)} onItemClick={onClose} />
+        <NavSection title="Manage" items={NAV_ITEMS.slice(2, 6)} onItemClick={onClose} />
+        {user?.is_admin && <NavSection title="Content" items={ADMIN_ITEMS} onItemClick={onClose} />}
+        <NavSection title="Account" items={NAV_ITEMS.slice(6)} onItemClick={onClose} />
       </nav>
 
       {/* Plan */}
       <div className="border-t border-slate-800 p-3">
-        <div className="rounded-lg border border-slate-800 bg-slate-900/50 p-3">
+        <div className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">Free plan</span>
-            <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">1/1 connections</span>
+            <span className="text-[11px] font-medium text-slate-400">Free plan</span>
+            <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">1/1</span>
           </div>
-          <button onClick={() => navigate('/pricing')}
-            className="w-full rounded-lg bg-indigo-600 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 transition-colors">
+          <button onClick={() => { navigate('/pricing'); onClose?.() }}
+            className="w-full rounded-lg border border-slate-700 py-1.5 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white transition-colors">
             View Plans
           </button>
         </div>

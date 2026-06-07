@@ -15,7 +15,7 @@ const PAGE_TITLES = {
   '/settings': 'Settings',
 }
 
-export default function Navbar() {
+export default function Navbar({ onMenu }) {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [notifications, setNotifications] = useState([])
@@ -62,8 +62,14 @@ export default function Navbar() {
   const unreadCount = notifications.length
 
   return (
-    <header className="fixed top-0 left-60 right-0 z-30 flex h-14 items-center justify-between border-b border-slate-800 bg-[#0B1220] px-6">
-      <h2 className="text-sm font-medium text-slate-200">{pageTitle}</h2>
+    <header className="fixed top-0 left-0 md:left-60 right-0 z-30 flex h-14 items-center justify-between border-b border-slate-800 bg-[#0B1220] px-4 sm:px-6">
+      <div className="flex items-center gap-2">
+        <button onClick={onMenu} aria-label="Open menu"
+          className="md:hidden grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-slate-200 transition-colors">
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
+        </button>
+        <h2 className="text-sm font-medium text-slate-200">{pageTitle}</h2>
+      </div>
 
       <div className="flex items-center gap-1.5">
         <ThemeToggle className="h-8 w-8 border-0 hover:bg-slate-800" />
