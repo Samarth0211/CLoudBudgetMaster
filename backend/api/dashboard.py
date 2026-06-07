@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Query, Path
+from fastapi import APIRouter, Depends, Query, Path, Body
 from typing import Optional
 from backend.db.client import get_db
 from backend.dependencies import get_current_user
+from backend.services.ai.report_insights import generate_report_insights
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -445,3 +446,18 @@ def _calc_wow_change(db, conn_ids: list) -> tuple[float, float]:
         pass
 
     return 0.0, 0.0
+
+
+@router.post("/ai-insights")
+async def ai_insights(
+    ctx: dict = Body(default={}),
+    user=Depends(get_current_user),
+):
+    """AI narrative for the cost report (executive summary, suggestions, FAQ).
+
+    The frontend already assembles the report data, so it POSTs that context here
+    and we only run the open-source model (Kimi K2 via Groq). Returns the same
+    deterministic shape on any failure so the report is never blank.
+    """
+    insights = await generate_report_insights(ctx or {})
+    return insights

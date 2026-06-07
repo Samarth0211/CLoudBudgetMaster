@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     jwt_secret: str = ""
     anthropic_api_key: str = ""
     groq_api_key: str = ""
+    # Open-source model (Kimi K2 via Groq) used for AI report narratives.
+    groq_report_model: str = "moonshotai/kimi-k2-instruct"
     resend_api_key: str = ""
     smtp_host: str = ""
     smtp_port: int = 465

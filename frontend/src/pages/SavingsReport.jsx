@@ -31,6 +31,30 @@ async function fetchAllResources() {
   return all
 }
 
+// Assemble the factual brief the AI model grounds its narrative in (no invented numbers).
+function buildAiContext({ sum, svc, fc, conns, res, acct }) {
+  const monthly = sum?.total_monthly_cost_usd || 0
+  const waste = sum?.total_waste_cost_usd || 0
+  const isWaste = (r) => r.waste_status && r.waste_status !== 'active'
+  return {
+    account_name: acct,
+    connection_count: conns.length,
+    resource_count: res.length,
+    unused_count: res.filter(isWaste).length,
+    monthly_cost: monthly,
+    projected_month_end: fc?.projected_monthly ?? null,
+    wow_percent: sum?.cost_change_wow_percent || 0,
+    waste_cost: waste,
+    waste_pct: monthly > 0 ? +((waste / monthly) * 100).toFixed(1) : 0,
+    annual_savings: waste * 12,
+    services: (svc || []).slice(0, 8).map(s => ({ name: svcLabel(s.service), cost: s.cost, pct: s.percent })),
+    top_resources: res.slice().sort((a, b) => (b.monthly_cost_usd || 0) - (a.monthly_cost_usd || 0)).slice(0, 8)
+      .map(r => ({ name: r.resource_name || r.resource_id, type: typeLabel(r.resource_type), region: r.region, monthly_cost: r.monthly_cost_usd })),
+    top_waste: res.filter(isWaste).sort((a, b) => (b.waste_monthly_cost_usd || 0) - (a.waste_monthly_cost_usd || 0)).slice(0, 8)
+      .map(r => ({ name: r.resource_name || r.resource_id, type: typeLabel(r.resource_type), waste_monthly: r.waste_monthly_cost_usd, reason: r.waste_reason || r.waste_status })),
+  }
+}
+
 export default function SavingsReport() {
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
@@ -40,29 +64,39 @@ export default function SavingsReport() {
   const [forecast, setForecast] = useState(null)
   const [tags, setTags] = useState(null)
   const [account, setAccount] = useState('')
+  const [insights, setInsights] = useState(null)
+  const [aiLoading, setAiLoading] = useState(true)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
-    Promise.all([
-      api.get('/dashboard/summary').then(r => setSummary(r.data)),
-      api.get('/dashboard/trend?days=30').then(r => setTrend(r.data.data_points || [])),
-      api.get('/dashboard/cost-by-service?days=30').then(r => setServices(r.data.services || [])).catch(() => {}),
-      api.get('/dashboard/forecast').then(r => setForecast(r.data)).catch(() => {}),
-      api.get('/dashboard/cost-by-tag').then(r => setTags(r.data)).catch(() => {}),
-      api.get('/connections').then(r => {
-        const cs = r.data.connections || []
-        setConnections(cs)
-        setAccount(cs.length === 1 ? cs[0].display_name : cs.length ? `${cs.length} cloud accounts` : 'All accounts')
-      }).catch(() => {}),
-      fetchAllResources().then(setResources).catch(() => {}),
-    ]).finally(() => setLoading(false))
+    (async () => {
+      const [sum, tr, svc, fc, tg, conns, res] = await Promise.all([
+        api.get('/dashboard/summary').then(r => r.data).catch(() => null),
+        api.get('/dashboard/trend?days=30').then(r => r.data.data_points || []).catch(() => []),
+        api.get('/dashboard/cost-by-service?days=30').then(r => r.data.services || []).catch(() => []),
+        api.get('/dashboard/forecast').then(r => r.data).catch(() => null),
+        api.get('/dashboard/cost-by-tag').then(r => r.data).catch(() => null),
+        api.get('/connections').then(r => r.data.connections || []).catch(() => []),
+        fetchAllResources().catch(() => []),
+      ])
+      const acct = conns.length === 1 ? conns[0].display_name : conns.length ? `${conns.length} cloud accounts` : 'All accounts'
+      setSummary(sum); setTrend(tr); setServices(svc); setForecast(fc); setTags(tg)
+      setConnections(conns); setResources(res); setAccount(acct)
+      setLoading(false)
+
+      // AI narrative (Kimi K2 via Groq) — non-blocking, the page is already usable.
+      api.post('/dashboard/ai-insights', buildAiContext({ sum, svc, fc, conns, res, acct }))
+        .then(r => setInsights(r.data))
+        .catch(() => setInsights(null))
+        .finally(() => setAiLoading(false))
+    })()
   }, [])
 
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await generateCostReport({ summary, trend, connections, resources, services, forecast, tags, account })
+      await generateCostReport({ summary, trend, connections, resources, services, forecast, tags, account, insights })
     } catch {
       alert('Could not generate the report. Please try again.')
     } finally {
@@ -117,6 +151,29 @@ export default function SavingsReport() {
           <Kpi label="Recoverable" value={`${savingsPercent}%`} color="text-amber-400" />
           <Kpi label="Annual Savings" value={money0(annualSavings)} color="text-emerald-400" />
         </div>
+      </div>
+
+      {/* AI analysis */}
+      <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 mb-6">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-bold text-white">AI Analysis</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FF9900]/10 px-2.5 py-1 text-[11px] font-medium text-[#FF9900]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#FF9900]" />
+            {insights?.model && insights.model !== 'rule-based' ? `Kimi K2 · ${insights.model.split('/').pop()}` : 'Kimi K2'}
+          </span>
+        </div>
+        {aiLoading ? (
+          <div className="flex items-center gap-3 text-sm text-slate-400">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/10 border-t-[#FF9900]" />
+            Analyzing your cloud spend…
+          </div>
+        ) : insights?.executive_summary ? (
+          <div className="space-y-3 text-sm leading-relaxed text-slate-300">
+            {insights.executive_summary.split(/\n{2,}/).map((p, i) => <p key={i}>{p}</p>)}
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">AI analysis is unavailable right now. The data above and recommendations below are still accurate.</p>
+        )}
       </div>
 
       {/* Cost by Service */}
@@ -207,16 +264,48 @@ export default function SavingsReport() {
         <ConnectionSection key={conn.id} conn={conn} resources={resources.filter(r => r.connection_id === conn.id)} />
       ))}
 
-      {/* Recommendations */}
-      <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6">
-        <h2 className="text-lg font-bold text-white mb-4">Recommendations</h2>
-        <ul className="space-y-2 text-sm text-slate-300">
-          {wasteCost > 0 && <li className="flex items-start gap-2"><span className="text-[#FF5247] mt-0.5">1.</span><span>Terminate or right-size the {unused} idle/unused resources to save <strong className="text-white">{money(wasteCost)}/month</strong>.</span></li>}
-          <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">2.</span><span>Configure cost-spike alerts to catch unexpected increases early.</span></li>
-          {taggedPct < 80 && <li className="flex items-start gap-2"><span className="text-[#3FA9F5] mt-0.5">3.</span><span>Improve tagging coverage (currently {taggedPct}%) so spend can be attributed by team/app.</span></li>}
-          <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">4.</span><span>Use Reserved Instances or Savings Plans for steady-state workloads.</span></li>
-        </ul>
+      {/* Detailed suggestions */}
+      <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 mb-6">
+        <h2 className="text-lg font-bold text-white mb-4">Detailed Suggestions</h2>
+        {insights?.suggestions?.length ? (
+          <ol className="space-y-3">
+            {insights.suggestions.map((s, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#FF9900]/15 text-xs font-bold text-[#FF9900]">{i + 1}</span>
+                <div>
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="font-semibold text-white">{s.title}</span>
+                    {s.monthly_savings > 0 && <span className="rounded bg-emerald-500/10 px-1.5 py-0.5 text-[11px] font-medium text-emerald-400">~{money(s.monthly_savings)}/mo</span>}
+                  </div>
+                  <p className="mt-0.5 text-slate-300">{s.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <ul className="space-y-2 text-sm text-slate-300">
+            {wasteCost > 0 && <li className="flex items-start gap-2"><span className="text-[#FF5247] mt-0.5">1.</span><span>Terminate or right-size the {unused} idle/unused resources to save <strong className="text-white">{money(wasteCost)}/month</strong>.</span></li>}
+            <li className="flex items-start gap-2"><span className="text-amber-400 mt-0.5">2.</span><span>Configure cost-spike alerts to catch unexpected increases early.</span></li>
+            {taggedPct < 80 && <li className="flex items-start gap-2"><span className="text-[#3FA9F5] mt-0.5">3.</span><span>Improve tagging coverage (currently {taggedPct}%) so spend can be attributed by team/app.</span></li>}
+            <li className="flex items-start gap-2"><span className="text-emerald-400 mt-0.5">4.</span><span>Use Reserved Instances or Savings Plans for steady-state workloads.</span></li>
+          </ul>
+        )}
       </div>
+
+      {/* Common questions (FAQ) */}
+      {insights?.faq?.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6">
+          <h2 className="text-lg font-bold text-white mb-4">Common Questions</h2>
+          <div className="space-y-4">
+            {insights.faq.map((f, i) => (
+              <div key={i}>
+                <p className="text-sm font-semibold text-white">{f.q}</p>
+                <p className="mt-1 text-sm text-slate-300">{f.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <p className="mt-6 text-center text-xs text-slate-600">Generated by CloudBudgetMaster · {new Date().toLocaleDateString()} · Download the PDF for a client-ready copy.</p>
     </div>
