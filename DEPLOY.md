@@ -27,6 +27,10 @@ verified deploy procedure.
    cd /var/www/cloudbudgetmaster && git fetch origin && git reset --hard origin/main && cd frontend && npm install && npm run build
    ```
    Vite writes to `frontend/dist`, which nginx already serves — **no nginx reload needed**.
+   **Then restart the backend:** `systemctl restart cbm-api`. The build wipes `dist/`,
+   including the static blog SEO pages (`dist/blog/*`, `sitemap.xml`, `robots.txt`);
+   the API regenerates them on startup. Skipping this leaves the blog/sitemap 404 until
+   the next post is saved.
 3. **Always verify the deploy actually shipped** (a "✓ built" can still be old code):
    ```bash
    git -C /var/www/cloudbudgetmaster rev-parse --short HEAD   # must match what you pushed
