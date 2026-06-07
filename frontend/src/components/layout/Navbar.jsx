@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
+import ThemeToggle from '../shared/ThemeToggle'
 import api from '../../lib/api'
 
 const PAGE_TITLES = {
@@ -65,6 +66,7 @@ export default function Navbar() {
       <h2 className="text-sm font-medium text-slate-200">{pageTitle}</h2>
 
       <div className="flex items-center gap-1.5">
+        <ThemeToggle className="h-8 w-8 border-0 hover:bg-slate-800" />
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <button onClick={() => setShowNotif(!showNotif)}

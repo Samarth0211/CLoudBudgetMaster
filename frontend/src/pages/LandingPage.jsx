@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/shared/BrandLogo'
+import ThemeToggle from '../components/shared/ThemeToggle'
 
 /* ============================================================================
    CloudBudgetMaster — AWS-flavored landing page (Smile Orange on squid-ink navy).
@@ -116,7 +117,7 @@ function LandingNav({ onCta, onSignIn }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
       style={{
-        background: scrolled ? 'rgba(11,18,32,0.82)' : 'transparent',
+        background: scrolled ? 'var(--header-bg)' : 'transparent',
         backdropFilter: scrolled ? 'blur(16px)' : 'none',
         borderBottom: `1px solid ${scrolled ? 'var(--border)' : 'transparent'}`,
       }}>
@@ -132,6 +133,7 @@ function LandingNav({ onCta, onSignIn }) {
             ))}
           </nav>
           <div className="hidden md:flex items-center gap-2.5">
+            <ThemeToggle variant="ghost" />
             <button onClick={onSignIn} className="px-3.5 py-2 text-[14px] font-medium text-[var(--fg-2)] hover:text-white transition-colors">Sign in</button>
             <button onClick={onCta} className="btn btn-primary px-5 py-2.5 text-[14px]">
               Start free <Icon d={PATHS.arrow} className="h-4 w-4" sw={2.2} />
@@ -143,10 +145,14 @@ function LandingNav({ onCta, onSignIn }) {
         </div>
       </div>
       {open && (
-        <div className="md:hidden border-t border-[var(--border)] bg-[rgba(11,18,32,0.96)] backdrop-blur-xl px-6 py-4 flex flex-col gap-1">
+        <div className="md:hidden border-t border-[var(--border)] bg-[var(--canvas)] backdrop-blur-xl px-6 py-4 flex flex-col gap-1">
           {links.map(([label, href]) => (
             <a key={href} href={href} onClick={() => setOpen(false)} className="py-2.5 text-[var(--fg-2)] hover:text-white">{label}</a>
           ))}
+          <div className="flex items-center justify-between py-2 border-t border-[var(--border)] mt-1">
+            <span className="text-sm text-[var(--fg-3)]">Theme</span>
+            <ThemeToggle variant="ghost" />
+          </div>
           <button onClick={onCta} className="btn btn-primary mt-2 px-5 py-3">Start free</button>
         </div>
       )}

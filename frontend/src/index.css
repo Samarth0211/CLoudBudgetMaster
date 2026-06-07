@@ -207,3 +207,59 @@ body {
   .print\:text-black { color: black !important; }
   .print\:border-gray-200 { border-color: #e5e7eb !important; }
 }
+
+/* ============================================================================
+   LIGHT THEME (default). The dark design lives in :root; this additive layer
+   flips the CSS variables AND the hardcoded utility classes the dashboard uses.
+   These rules are unlayered, so they reliably beat Tailwind's layered utilities.
+   ============================================================================ */
+:root { --header-bg: rgba(11, 18, 32, 0.82); }
+
+[data-theme="light"] {
+  --canvas: #f4f6fb; --canvas-2: #eaeef5;
+  --ink: #ffffff; --ink-2: #f7f9fc; --ink-3: #eef2f7;
+  --surface: #ffffff; --surface-raised: #f7f9fc;
+  --glass-1: rgba(15,23,42,0.02); --glass-2: rgba(15,23,42,0.04); --glass-3: rgba(15,23,42,0.07);
+  --border: rgba(15,23,42,0.10); --border-soft: rgba(15,23,42,0.06); --border-strong: rgba(15,23,42,0.16);
+  --fg: #0f172a; --fg-1: #1e293b; --fg-2: #334155; --fg-3: #475569; --fg-4: #64748b; --fg-5: #94a3b8;
+  --header-bg: rgba(255,255,255,0.85);
+  color-scheme: light;
+}
+[data-theme="light"] body { background: var(--canvas); color: var(--fg); }
+
+/* surfaces */
+[data-theme="light"] .bg-\[\#0B1220\] { background-color: var(--canvas); }
+[data-theme="light"] .bg-\[\#232F3E\] { background-color: #ffffff; }
+[data-theme="light"] .bg-white\/5  { background-color: rgba(15,23,42,0.035); }
+[data-theme="light"] .bg-white\/10 { background-color: rgba(15,23,42,0.06); }
+[data-theme="light"] .bg-white\/20 { background-color: rgba(15,23,42,0.10); }
+[data-theme="light"] .bg-white\/\[0\.03\] { background-color: rgba(15,23,42,0.025); }
+[data-theme="light"] .bg-slate-800 { background-color: #e8edf3; }
+[data-theme="light"] .bg-slate-800\/50 { background-color: rgba(232,237,243,0.6); }
+[data-theme="light"] .bg-slate-900,
+[data-theme="light"] .bg-slate-900\/50,
+[data-theme="light"] .bg-slate-900\/80 { background-color: #eef2f7; }
+[data-theme="light"] .bg-slate-700 { background-color: #d7dee8; }
+
+/* text */
+[data-theme="light"] .text-white { color: #0f172a; }
+[data-theme="light"] .text-slate-200 { color: #1e293b; }
+[data-theme="light"] .text-slate-300 { color: #334155; }
+[data-theme="light"] .text-slate-400 { color: #475569; }
+[data-theme="light"] .text-slate-500 { color: #5b6b7f; }
+[data-theme="light"] .text-slate-600 { color: #7a8aa0; }
+
+/* borders */
+[data-theme="light"] .border-white\/10 { border-color: rgba(15,23,42,0.10); }
+[data-theme="light"] .border-white\/5  { border-color: rgba(15,23,42,0.06); }
+[data-theme="light"] .border-white\/20 { border-color: rgba(15,23,42,0.14); }
+[data-theme="light"] .border-slate-800,
+[data-theme="light"] .border-slate-800\/50 { border-color: #e2e8f0; }
+[data-theme="light"] .border-slate-700 { border-color: #cbd5e1; }
+[data-theme="light"] .divide-white\/5 > :not([hidden]) ~ :not([hidden]) { border-color: rgba(15,23,42,0.06); }
+
+/* keep white text on orange/primary (remapped indigo/violet) buttons */
+[data-theme="light"] [class*="bg-indigo-"].text-white,
+[data-theme="light"] [class*="bg-violet-"].text-white,
+[data-theme="light"] [class*="from-indigo-"].text-white,
+[data-theme="light"] [class*="from-violet-"].text-white { color: #ffffff; }
