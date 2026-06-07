@@ -1,6 +1,5 @@
 import re
 import secrets
-from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from backend.db.client import get_supabase
@@ -9,6 +8,7 @@ from backend.dependencies import get_current_user
 from backend.core.email_service import send_verification_email, send_password_reset_email
 from backend.core.rate_limit import limiter
 from backend.core.otp_store import set_code, verify_code
+from backend.core.security import hash_password, verify_password, issue_token
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,136 +37,84 @@ def validate_password(password: str) -> str | None:
     return None
 
 
+def _auth_response(profile: dict) -> AuthResponse:
+    token, exp = issue_token(profile["id"])
+    return AuthResponse(
+        id=profile["id"],
+        email=profile["email"],
+        full_name=profile.get("full_name"),
+        plan=profile.get("plan", "free"),
+        access_token=token,
+        refresh_token=token,
+        expires_at=exp,
+    )
+
+
 @router.post("/register", status_code=201)
 @limiter.limit("5/minute")
 async def register(request: Request, body: RegisterRequest):
-    """Validate password, create user, send OTP email. Tokens returned after OTP verification."""
     pw_error = validate_password(body.password)
     if pw_error:
         raise HTTPException(status_code=400, detail=pw_error)
 
+    email = str(body.email).lower().strip()
     supabase = get_supabase()
 
-    try:
-        auth_response = supabase.auth.sign_up({
-            "email": body.email,
-            "password": body.password,
-            "options": {"data": {"full_name": body.full_name}},
-        })
-    except Exception as e:
-        error_msg = str(e).lower()
-        if "already registered" in error_msg or "already been registered" in error_msg:
-            raise HTTPException(status_code=409, detail="Email already registered")
-        raise HTTPException(status_code=400, detail=str(e))
+    existing = supabase.table("profiles").select("id").eq("email", email).execute()
+    if existing.data:
+        raise HTTPException(status_code=409, detail="Email already registered")
 
-    user = auth_response.user
-    if not user:
-        raise HTTPException(status_code=400, detail="Registration failed")
+    supabase.table("profiles").insert({
+        "email": email,
+        "full_name": body.full_name,
+        "password_hash": hash_password(body.password),
+        "plan": "free",
+        "email_verified": False,
+    }).execute()
 
-    # Insert profile
-    try:
-        supabase.table("profiles").upsert({
-            "id": user.id,
-            "email": body.email,
-            "full_name": body.full_name,
-            "plan": "free",
-        }).execute()
-    except Exception:
-        pass
-
-    # Generate and send OTP (stored hashed + attempt-limited in local SQLite)
     code = f"{secrets.randbelow(900000) + 100000}"
-    set_code(body.email, "verify", code)
-    send_verification_email(body.email, code, body.full_name)
-
+    set_code(email, "verify", code)
+    send_verification_email(email, code, body.full_name)
     return {"message": "Verification code sent to your email", "requires_verification": True}
 
 
 class VerifyOTPRequest(BaseModel):
     email: str
     code: str
-    password: str  # Frontend resends password so we can auto-login after verification
+    password: str = ""  # accepted for frontend compatibility; unused
 
 
 @router.post("/verify-otp", response_model=AuthResponse)
 @limiter.limit("10/minute")
 async def verify_otp(request: Request, body: VerifyOTPRequest):
-    """Verify OTP, then sign in and return tokens."""
-    ok, err = verify_code(body.email, "verify", body.code)
+    email = body.email.lower().strip()
+    ok, err = verify_code(email, "verify", body.code)
     if not ok:
         raise HTTPException(status_code=400, detail=err)
 
-    # OTP valid — now sign in
     supabase = get_supabase()
-    try:
-        auth_response = supabase.auth.sign_in_with_password({
-            "email": body.email,
-            "password": body.password,
-        })
-    except Exception:
-        raise HTTPException(status_code=401, detail="Verification succeeded but login failed. Try signing in manually.")
-
-    user = auth_response.user
-    session = auth_response.session
-    if not user or not session:
-        raise HTTPException(status_code=401, detail="Verification succeeded but login failed. Try signing in manually.")
-
-    try:
-        profile = supabase.table("profiles").select("*").eq("id", user.id).single().execute()
-        profile_data = profile.data or {}
-    except Exception:
-        profile_data = {"full_name": "", "plan": "free"}
-
-    return AuthResponse(
-        id=user.id,
-        email=user.email,
-        full_name=profile_data.get("full_name"),
-        plan=profile_data.get("plan", "free"),
-        access_token=session.access_token,
-        refresh_token=session.refresh_token,
-        expires_at=session.expires_at,
-    )
+    supabase.table("profiles").update({"email_verified": True}).eq("email", email).execute()
+    profile = supabase.table("profiles").select("*").eq("email", email).single().execute()
+    if not profile.data:
+        raise HTTPException(status_code=404, detail="Account not found")
+    return _auth_response(profile.data)
 
 
 @router.post("/login", response_model=AuthResponse)
 @limiter.limit("10/minute")
 async def login(request: Request, body: LoginRequest):
+    email = str(body.email).lower().strip()
     supabase = get_supabase()
+    profile = supabase.table("profiles").select("*").eq("email", email).single().execute()
 
-    try:
-        auth_response = supabase.auth.sign_in_with_password({
-            "email": body.email,
-            "password": body.password,
-        })
-    except Exception:
+    if not profile.data:
         raise HTTPException(status_code=401, detail="Invalid email or password")
-
-    user = auth_response.user
-    session = auth_response.session
-    if not user or not session:
+    if not verify_password(body.password, profile.data.get("password_hash")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not profile.data.get("email_verified"):
+        raise HTTPException(status_code=403, detail="Please verify your email before signing in.")
 
-    try:
-        profile = supabase.table("profiles").select("*").eq("id", user.id).single().execute()
-        profile_data = profile.data or {}
-    except Exception:
-        supabase.table("profiles").upsert({
-            "id": user.id,
-            "email": user.email,
-            "full_name": user.user_metadata.get("full_name", "") if user.user_metadata else "",
-            "plan": "free",
-        }).execute()
-        profile_data = {"full_name": "", "plan": "free"}
-
-    return AuthResponse(
-        id=user.id,
-        email=user.email,
-        full_name=profile_data.get("full_name"),
-        plan=profile_data.get("plan", "free"),
-        access_token=session.access_token,
-        refresh_token=session.refresh_token,
-        expires_at=session.expires_at,
-    )
+    return _auth_response(profile.data)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -176,11 +124,11 @@ class ForgotPasswordRequest(BaseModel):
 @router.post("/forgot-password")
 @limiter.limit("4/minute")
 async def forgot_password(request: Request, body: ForgotPasswordRequest):
-    """Generate reset code and send via our SMTP."""
+    email = body.email.lower().strip()
     code = f"{secrets.randbelow(900000) + 100000}"
-    set_code(body.email, "reset", code)
-    # Send email (don't reveal whether the account exists)
-    send_password_reset_email(body.email, code)
+    set_code(email, "reset", code)
+    # Don't reveal whether the account exists.
+    send_password_reset_email(email, code)
     return {"message": "If an account with that email exists, a reset code has been sent."}
 
 
@@ -193,35 +141,19 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/reset-password")
 @limiter.limit("10/minute")
 async def reset_password(request: Request, body: ResetPasswordRequest):
-    """Verify reset code and update password."""
     pw_error = validate_password(body.new_password)
     if pw_error:
         raise HTTPException(status_code=400, detail=pw_error)
 
-    ok, err = verify_code(body.email, "reset", body.code)
+    email = body.email.lower().strip()
+    ok, err = verify_code(email, "reset", body.code)
     if not ok:
         raise HTTPException(status_code=400, detail=err)
 
-    # Update password via Supabase admin API
     supabase = get_supabase()
-    try:
-        # Find user by email
-        users = supabase.auth.admin.list_users()
-        target_user = None
-        for u in users:
-            if hasattr(u, 'email') and u.email and u.email.lower() == email_key:
-                target_user = u
-                break
-
-        if not target_user:
-            raise HTTPException(status_code=400, detail="Account not found")
-
-        supabase.auth.admin.update_user_by_id(target_user.id, {"password": body.new_password})
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update password: {str(e)[:200]}")
-
+    res = supabase.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("email", email).execute()
+    if not res.data:
+        raise HTTPException(status_code=400, detail="Account not found")
     return {"message": "Password updated successfully. You can now sign in."}
 
 
@@ -247,51 +179,19 @@ async def change_password(request: Request, body: ChangePasswordRequest, user=De
     pw_error = validate_password(body.new_password)
     if pw_error:
         raise HTTPException(status_code=400, detail=pw_error)
-
-    supabase = get_supabase()
-
-    # Verify current password by attempting sign-in
-    try:
-        supabase.auth.sign_in_with_password({"email": user["email"], "password": body.current_password})
-    except Exception:
+    if not verify_password(body.current_password, user.get("password_hash")):
         raise HTTPException(status_code=401, detail="Current password is incorrect")
 
-    # Update password
-    try:
-        supabase.auth.admin.update_user_by_id(user["id"], {"password": body.new_password})
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to update password: {str(e)[:200]}")
-
+    supabase = get_supabase()
+    supabase.table("profiles").update({"password_hash": hash_password(body.new_password)}).eq("id", user["id"]).execute()
     return {"message": "Password updated successfully"}
 
 
 @router.delete("/account")
 async def delete_account(user=Depends(get_current_user)):
     supabase = get_supabase()
-
-    # Delete user data
-    try:
-        supabase.table("resources").delete().eq("connection_id",
-            supabase.table("cloud_connections").select("id").eq("user_id", user["id"]).execute().data[0]["id"]
-            if supabase.table("cloud_connections").select("id").eq("user_id", user["id"]).execute().data else "none"
-        ).execute()
-    except Exception:
-        pass
-
-    try:
-        supabase.table("cloud_connections").delete().eq("user_id", user["id"]).execute()
-        supabase.table("alert_rules").delete().eq("user_id", user["id"]).execute()
-        supabase.table("alert_events").delete().eq("user_id", user["id"]).execute()
-        supabase.table("profiles").delete().eq("id", user["id"]).execute()
-    except Exception:
-        pass
-
-    # Delete auth user
-    try:
-        supabase.auth.admin.delete_user(user["id"])
-    except Exception:
-        pass
-
+    # FK cascades remove connections, resources, alerts, etc.
+    supabase.table("profiles").delete().eq("id", user["id"]).execute()
     return {"message": "Account deleted"}
 
 
