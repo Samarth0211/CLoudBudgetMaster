@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BrandLogo from '../components/shared/BrandLogo'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../lib/api'
@@ -119,7 +120,7 @@ export default function Pricing() {
       {!isLoggedIn && (
         <div className="flex items-center justify-between mb-12">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="CloudBudgetMaster" className="h-7 w-7" />
+            <BrandLogo className="h-7 w-7" />
             <span className="text-sm font-semibold text-white">CloudBudgetMaster</span>
           </Link>
           <div className="flex items-center gap-3">

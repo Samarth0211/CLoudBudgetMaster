@@ -1,5 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { BLOGS } from '../data/blogs'
+import BrandLogo from '../components/shared/BrandLogo'
 
 export default function BlogPost() {
   const { slug } = useParams()
@@ -22,7 +23,7 @@ export default function BlogPost() {
         {/* Nav */}
         <div className="flex items-center justify-between mb-12">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="CloudBudgetMaster" className="h-7 w-7" />
+            <BrandLogo className="h-7 w-7" />
             <span className="text-sm font-semibold text-white">CloudBudgetMaster</span>
           </Link>
           <div className="flex items-center gap-3">

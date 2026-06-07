@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { BLOGS } from '../data/blogs'
+import BrandLogo from '../components/shared/BrandLogo'
 
 const CATEGORY_COLORS = {
   AWS: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
@@ -16,7 +17,7 @@ export default function Blog() {
         {/* Nav */}
         <div className="flex items-center justify-between mb-12">
           <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.png" alt="CloudBudgetMaster" className="h-7 w-7" />
+            <BrandLogo className="h-7 w-7" />
             <span className="text-sm font-semibold text-white">CloudBudgetMaster</span>
           </Link>
           <div className="flex items-center gap-3">

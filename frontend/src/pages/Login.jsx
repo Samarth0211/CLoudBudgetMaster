@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import BrandLogo from '../components/shared/BrandLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../lib/api'
@@ -65,7 +66,7 @@ export default function Login() {
 
         <div className="relative">
           <Link to="/" className="flex items-center gap-3">
-            <img src="/logo.png" alt="CloudBudgetMaster" className="h-10 w-10" />
+            <BrandLogo className="h-10 w-10" />
             <span className="text-2xl font-bold tracking-tight">CloudBudgetMaster</span>
           </Link>
           <p className="mt-2 text-sm text-indigo-200">Multi-cloud cost intelligence</p>
@@ -102,7 +103,7 @@ export default function Login() {
           {/* Mobile logo */}
           <div className="mb-8 lg:hidden flex items-center justify-center gap-2">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="CloudBudgetMaster" className="h-9 w-9" />
+              <BrandLogo className="h-9 w-9" />
               <span className="text-xl font-bold text-white">CloudBudgetMaster</span>
             </Link>
           </div>

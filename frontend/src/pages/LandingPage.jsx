@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import BrandLogo from '../components/shared/BrandLogo'
 
 /* ─── Cloud icon (reused from Sidebar) ─── */
 const CloudIcon = ({ className = 'h-6 w-6' }) => (
@@ -25,7 +26,7 @@ function LandingNav() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5">
-            <img src="/logo.png" alt="CloudBudgetMaster" className="h-8 w-8" />
+            <BrandLogo className="h-8 w-8" />
             <span className="text-lg font-bold text-white">CloudBudgetMaster</span>
           </Link>
 
@@ -435,9 +436,7 @@ export default function LandingPage() {
             {/* Brand */}
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600">
-                  <CloudIcon className="h-5 w-5 text-white" />
-                </div>
+                <BrandLogo className="h-8 w-8" />
                 <span className="text-lg font-bold text-white">CloudBudgetMaster</span>
               </div>
               <p className="mt-3 text-sm text-slate-500 leading-relaxed">

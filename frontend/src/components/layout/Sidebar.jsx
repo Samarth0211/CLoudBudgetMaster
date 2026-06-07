@@ -1,4 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
+import BrandLogo from '../shared/BrandLogo'
 
 const NAV_ITEMS = [
   { path: '/dashboard', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
@@ -42,7 +43,7 @@ export default function Sidebar() {
     <aside className="fixed left-0 top-0 z-40 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0a0a0a]">
       {/* Logo */}
       <div className="flex h-14 items-center gap-2 border-b border-slate-800 px-4">
-        <img src="/logo.png" alt="CloudBudgetMaster" className="h-7 w-7" />
+        <BrandLogo className="h-7 w-7" />
         <span className="text-sm font-semibold text-white">CloudBudgetMaster</span>
       </div>
 
