@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from backend.db.client import get_db
 from backend.dependencies import get_current_user
+from backend.core.rate_limit import limiter
 
 router = APIRouter(prefix="/assistant", tags=["assistant"])
 
@@ -77,6 +78,18 @@ async def chat_usage(user=Depends(get_current_user)):
     db = get_db()
     usage = _get_chat_usage(db, user["id"])
     return {"used": usage["count"], "limit": limit, "plan": plan}
+
+
+@router.post("/public-chat")
+@limiter.limit("12/minute")
+async def public_chat(request: Request, req: ChatRequest):
+    """Public, no-login FinOps assistant for the landing page (rate-limited per IP)."""
+    from backend.services.ai.public_chat import public_assistant
+    msg = (req.message or "").strip()
+    if not msg:
+        raise HTTPException(status_code=400, detail="Message is required")
+    history = [{"role": m.role, "content": m.content} for m in req.history]
+    return await public_assistant(msg[:1000], history)
 
 
 @router.post("/chat")

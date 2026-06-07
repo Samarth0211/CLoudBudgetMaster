@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/shared/BrandLogo'
 import ThemeToggle from '../components/shared/ThemeToggle'
+import PublicChat from '../components/PublicChat'
 
 /* ============================================================================
    CloudBudgetMaster — AWS-flavored landing page (Smile Orange on squid-ink navy).
@@ -723,7 +724,7 @@ export default function LandingPage() {
         <FinalCTA onCta={start} />
       </main>
       <Footer />
-      <ChatBubble onClick={start} />
+      <PublicChat />
     </div>
   )
 }
