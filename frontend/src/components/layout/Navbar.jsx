@@ -113,7 +113,7 @@ export default function Navbar() {
             <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-600 text-[10px] font-semibold text-white">
               {initials}
             </div>
-            <span className="hidden sm:block text-xs text-slate-300">{user?.full_name || 'User'}</span>
+            <span className="hidden sm:block text-xs font-medium text-slate-200">{user?.full_name || 'User'}</span>
           </button>
 
           {showUserMenu && (

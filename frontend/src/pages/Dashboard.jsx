@@ -209,7 +209,7 @@ export default function Dashboard() {
                         <stop offset="100%" stopColor="#FF9900" stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-track)" vertical={false} />
                     <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#475569' }} tickLine={false} axisLine={false}
                       tickFormatter={(d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} />
                     <YAxis tick={{ fontSize: 11, fill: '#475569' }} tickLine={false} axisLine={false}
@@ -245,7 +245,7 @@ export default function Dashboard() {
                   <div className="flex justify-center">
                     <div className="relative">
                       <svg className="h-28 w-28 -rotate-90" viewBox="0 0 120 120">
-                        <circle cx="60" cy="60" r="50" fill="none" stroke="#1e293b" strokeWidth="6" />
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="var(--chart-track)" strokeWidth="6" />
                         <circle cx="60" cy="60" r="50" fill="none"
                           stroke={summary.waste_percentage > 25 ? '#ef4444' : summary.waste_percentage > 10 ? '#f59e0b' : '#10b981'}
                           strokeWidth="6" strokeLinecap="round"

@@ -213,7 +213,7 @@ export default function SavingsReport() {
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={trend}>
               <defs><linearGradient id="rptGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FF9900" stopOpacity={0.25} /><stop offset="100%" stopColor="#FF9900" stopOpacity={0} /></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#33415533" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-track)" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} minTickGap={28} />
               <YAxis tick={{ fontSize: 11, fill: '#64748b' }} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} width={48} />
               <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #334155', background: '#0f172a', color: '#e2e8f0', fontSize: 12 }} formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Cost']} />
