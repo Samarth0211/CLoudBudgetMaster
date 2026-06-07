@@ -225,7 +225,7 @@ function Hero({ onCta }) {
             <span className="ping-dot absolute inline-flex h-full w-full rounded-full bg-[var(--orange)]" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--orange)]" />
           </span>
-          Now scanning AWS, GCP, Azure &amp; Snowflake
+          Live for AWS &amp; GCP · Azure &amp; Snowflake coming soon
         </div>
         <h1 className="reveal mx-auto mt-7 max-w-4xl text-[40px] font-extrabold leading-[1.04] tracking-[-0.025em] text-white sm:text-[58px] lg:text-[72px]">
           Stop burning money on<br className="hidden sm:block" />
@@ -289,9 +289,9 @@ function Stats() {
   const ref = useReveal()
   const [seenRef, seen] = useInView(0.5)
   const data = [
-    { to: 31, fmt: v => `${Math.round(v)}%`, label: 'Average waste found in first scan' },
-    { to: 5, fmt: v => `<${Math.round(v)} min`, label: 'From signup to first savings' },
-    { to: 4, fmt: v => `${Math.round(v)}`, label: 'Cloud providers, one dashboard' },
+    { to: 30, fmt: v => `~${Math.round(v)}%`, label: 'of cloud spend is wasted on average, industry-wide' },
+    { to: 5, fmt: v => `<${Math.round(v)} min`, label: 'From signup to your first scan' },
+    { to: 4, fmt: v => `${Math.round(v)}`, label: 'Clouds in one dashboard' },
     { to: 24, fmt: v => `${Math.round(v)}/7`, label: 'Automated, always-on scanning' },
   ]
   return (
