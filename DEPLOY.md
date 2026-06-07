@@ -22,21 +22,23 @@ verified deploy procedure.
 
 ## Deploy the frontend (the common case)
 1. Commit + push your changes to `main` (`github.com/Samarth0211/CLoudBudgetMaster`).
-2. On the server:
+2. On the server — use `reset --hard`, NOT `git pull` (see gotcha below):
    ```bash
-   cd /var/www/cloudbudgetmaster && git pull origin main && cd frontend && npm install && npm run build
+   cd /var/www/cloudbudgetmaster && git fetch origin && git reset --hard origin/main && cd frontend && npm install && npm run build
    ```
    Vite writes to `frontend/dist`, which nginx already serves — **no nginx reload needed**.
-3. Verify, then hard-refresh the site (Ctrl+Shift+R):
+3. **Always verify the deploy actually shipped** (a "✓ built" can still be old code):
    ```bash
-   curl -s https://cloudbudgetmaster.com/ | grep -o "index-[A-Za-z0-9]*\.css"
+   git -C /var/www/cloudbudgetmaster rev-parse --short HEAD   # must match what you pushed
+   JS=$(curl -s https://cloudbudgetmaster.com/ | grep -oE 'assets/index-[A-Za-z0-9_]+\.js' | head -1); curl -s "https://cloudbudgetmaster.com/$JS" | grep -c "<a string from your change>"
    ```
+   Then hard-refresh the site (Ctrl+Shift+R).
 
 ## Deploy the backend (only if backend changed)
 Ubuntu 24.04 blocks system-wide `pip` (PEP 668 "externally-managed"), so you MUST
 use the venv's pip, and restart via systemd (NOT pm2):
 ```bash
-cd /var/www/cloudbudgetmaster && git pull origin main
+cd /var/www/cloudbudgetmaster && git fetch origin && git reset --hard origin/main
 # install deps into the backend's venv (only needed when requirements changed)
 backend/venv/bin/pip install -r backend/requirements.txt
 # restart the systemd service + verify
@@ -47,6 +49,13 @@ If you add a new dependency, `import`-check it in the venv before restarting to
 avoid a boot crash: `backend/venv/bin/python -c "import <pkg>"`.
 
 ## Notes / gotchas
+- **Deploy with `git fetch && git reset --hard origin/main`, NOT `git pull`.**
+  Running `npm install` on the server modifies `frontend/package-lock.json`, which
+  makes `git pull` refuse to fast-forward — it fails *silently-ish* and the server
+  stays on old code while later `npm run build` reports "✓ built" (of the OLD code).
+  `reset --hard` always lands on the pushed commit. Git-ignored files
+  (`.env.production`, `backend/.env`) are preserved. **Always verify HEAD + the live
+  bundle after deploying** (see step 3 above).
 - **`frontend/.env.production` is required on the server** (git-ignored). It must
   contain `VITE_API_BASE_URL=https://api.cloudbudgetmaster.com/v1`. If missing, the
   Vite build silently falls back to `http://localhost:8000` and the whole app
