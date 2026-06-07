@@ -51,7 +51,7 @@ def _base_template(content: str) -> str:
         <div style="padding: 20px 32px; border-top: 1px solid #1e293b; background: #0a0a0a;">
           <p style="color: #475569; font-size: 11px; margin: 0; text-align: center;">
             CloudBudgetMaster &middot; Multi-cloud cost intelligence<br>
-            <a href="{settings.frontend_url}" style="color: #6366f1; text-decoration: none;">cloudbudgetmaster.com</a>
+            <a href="{settings.frontend_url}" style="color: #FF9900; text-decoration: none;">cloudbudgetmaster.com</a>
           </p>
         </div>
       </div>
@@ -149,7 +149,7 @@ async def send_alert_email(to_email: str, alert_data: dict) -> bool:
     </table>
 
     <div style="text-align: center; margin-top: 24px;">
-      <a href="{settings.frontend_url}/alerts" style="display: inline-block; background: #6366f1; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px;">View in Dashboard</a>
+      <a href="{settings.frontend_url}/alerts" style="display: inline-block; background: #FF9900; color: white; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-weight: 500; font-size: 13px;">View in Dashboard</a>
     </div>
     """
 
