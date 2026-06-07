@@ -264,3 +264,21 @@ body {
 [data-theme="light"] [class*="bg-violet-"].text-white,
 [data-theme="light"] [class*="from-indigo-"].text-white,
 [data-theme="light"] [class*="from-violet-"].text-white { color: #ffffff; }
+
+/* Light-mode overrides for hover/variant color utilities (base classes alone
+   don't cover `hover:bg-slate-800` etc. — without these, button hovers flash
+   dark navy on a light page). */
+[data-theme="light"] .hover\:bg-slate-800:hover { background-color: #e8edf3; }
+[data-theme="light"] .hover\:bg-slate-800\/50:hover { background-color: rgba(226,232,240,0.7); }
+[data-theme="light"] .hover\:bg-slate-700:hover { background-color: #d7dee8; }
+[data-theme="light"] .hover\:bg-white\/5:hover  { background-color: rgba(15,23,42,0.05); }
+[data-theme="light"] .hover\:bg-white\/10:hover { background-color: rgba(15,23,42,0.07); }
+[data-theme="light"] .hover\:border-slate-700:hover { border-color: #cbd5e1; }
+[data-theme="light"] .hover\:border-white\/20:hover { border-color: rgba(15,23,42,0.16); }
+[data-theme="light"] .hover\:text-white:hover    { color: #0f172a; }
+[data-theme="light"] .hover\:text-slate-200:hover { color: #1e293b; }
+[data-theme="light"] .hover\:text-slate-300:hover { color: #334155; }
+[data-theme="light"] .hover\:text-slate-400:hover { color: #475569; }
+/* keep white text on hover for orange/primary buttons */
+[data-theme="light"] [class*="bg-indigo-"].hover\:text-white:hover,
+[data-theme="light"] [class*="from-indigo-"].hover\:text-white:hover { color: #ffffff; }
