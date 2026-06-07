@@ -5,7 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from backend.config import get_settings
 
 
-def _send_email(to_email: str, subject: str, html: str) -> bool:
+def _send_email(to_email: str, subject: str, html: str, reply_to: str = "") -> bool:
     """Send an email via Hostinger SMTP."""
     settings = get_settings()
 
@@ -17,6 +17,8 @@ def _send_email(to_email: str, subject: str, html: str) -> bool:
     msg["From"] = f"CloudBudgetMaster <{settings.smtp_from_email or settings.smtp_user}>"
     msg["To"] = to_email
     msg["Subject"] = subject
+    if reply_to:
+        msg["Reply-To"] = reply_to
     msg.attach(MIMEText(html, "html"))
 
     try:
@@ -95,6 +97,30 @@ def send_verification_email(to_email: str, code: str, full_name: str) -> bool:
     </p>
     """
     return _send_email(to_email, f"Your CloudBudgetMaster verification code: {code}", _base_template(content))
+
+
+def send_contact_notification(name: str, email: str, company: str, message: str) -> bool:
+    """Notify the team of a new contact / demo request. Best-effort."""
+    settings = get_settings()
+    to = settings.contact_notify_email or settings.smtp_from_email or settings.smtp_user
+    if not to:
+        return False
+
+    def esc(s):
+        return (s or "—").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    body = esc(message).replace("\n", "<br>")
+    content = f"""
+    <h2 style="color:#ffffff;font-size:18px;margin:0 0 16px 0;">New contact / demo request</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+      <tr><td style="color:#64748b;font-size:12px;padding:4px 0;width:90px;">Name</td><td style="color:#e7ecf3;font-size:14px;">{esc(name)}</td></tr>
+      <tr><td style="color:#64748b;font-size:12px;padding:4px 0;">Email</td><td style="color:#e7ecf3;font-size:14px;">{esc(email)}</td></tr>
+      <tr><td style="color:#64748b;font-size:12px;padding:4px 0;">Company</td><td style="color:#e7ecf3;font-size:14px;">{esc(company)}</td></tr>
+    </table>
+    <div style="background:#111;border:1px solid #1e293b;border-radius:8px;padding:16px;color:#c5cedb;font-size:14px;line-height:1.6;">{body}</div>
+    <p style="color:#475569;font-size:12px;margin-top:16px;">Reply directly to this email to respond to {esc(name)}.</p>
+    """
+    return _send_email(to, f"New demo request from {name}", _base_template(content), reply_to=email)
 
 
 async def send_alert_email(to_email: str, alert_data: dict) -> bool:

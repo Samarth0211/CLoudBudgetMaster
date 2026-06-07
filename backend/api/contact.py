@@ -26,4 +26,12 @@ async def submit_contact(body: ContactRequest):
     except Exception:
         # Don't leak internals; the row may fail only if the table is missing.
         raise HTTPException(status_code=500, detail="Could not submit your message right now. Please email us directly.")
+
+    # Best-effort email notification — never fail the request if email is down.
+    try:
+        from backend.core.email_service import send_contact_notification
+        send_contact_notification(body.name, str(body.email), body.company, body.message)
+    except Exception:
+        pass
+
     return {"status": "received"}

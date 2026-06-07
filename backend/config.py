@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     smtp_user: str = ""
     smtp_password: str = ""
     smtp_from_email: str = ""
+    contact_notify_email: str = ""  # where contact-form submissions are emailed (defaults to smtp_user)
     paypal_client_id: str = ""
     paypal_client_secret: str = ""
     paypal_mode: str = "sandbox"  # "sandbox" or "live"
