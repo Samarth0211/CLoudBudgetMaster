@@ -112,7 +112,7 @@ function LandingNav({ onCta, onSignIn }) {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
-  const links = [['Product', '#features'], ['How it works', '#how'], ['Savings', '#calc'], ['Pricing', '#pricing']]
+  const links = [['Product', '#features'], ['How it works', '#how'], ['Savings', '#calc'], ['Pricing', '#pricing'], ['Blog', '/blog']]
   return (
     <header className="fixed inset-x-0 top-0 z-50 transition-all duration-300"
       style={{
