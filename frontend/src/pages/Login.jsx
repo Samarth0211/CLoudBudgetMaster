@@ -23,7 +23,9 @@ export default function Login() {
       await login(email, password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed')
+      setError(err.response?.status === 429
+        ? 'Too many attempts. Please wait a minute and try again.'
+        : (err.response?.data?.detail || 'Login failed'))
     } finally {
       setLoading(false)
     }
@@ -37,7 +39,9 @@ export default function Login() {
       await api.post('/auth/forgot-password', { email })
       setResetStep('code')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to send reset email')
+      setError(err.response?.status === 429
+        ? 'Too many requests. Please wait a minute before requesting another code.'
+        : (err.response?.data?.detail || 'Failed to send reset email'))
     } finally {
       setLoading(false)
     }
@@ -51,7 +55,9 @@ export default function Login() {
       await api.post('/auth/reset-password', { email, code: resetCode, new_password: newPassword })
       setResetStep('done')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to reset password')
+      setError(err.response?.status === 429
+        ? 'Too many attempts. Please wait a minute and try again.'
+        : (err.response?.data?.detail || 'Failed to reset password'))
     } finally {
       setLoading(false)
     }

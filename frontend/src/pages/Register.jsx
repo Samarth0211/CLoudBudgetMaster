@@ -39,7 +39,9 @@ export default function Register() {
       await api.post('/auth/register', { email, password, full_name: fullName })
       setStep('otp')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed')
+      setError(err.response?.status === 429
+        ? 'Too many attempts. Please wait a minute and try again.'
+        : (err.response?.data?.detail || 'Registration failed'))
     } finally {
       setLoading(false)
     }
@@ -58,7 +60,9 @@ export default function Register() {
       navigate('/dashboard')
       window.location.reload()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Verification failed')
+      setError(err.response?.status === 429
+        ? 'Too many attempts. Please wait a minute and try again.'
+        : (err.response?.data?.detail || 'Verification failed'))
     } finally {
       setLoading(false)
     }
