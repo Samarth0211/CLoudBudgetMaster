@@ -142,7 +142,7 @@ export default function SavingsReport() {
           <p className="mt-1 text-sm text-slate-400">{account} · {resources.length} resources · {unused} idle/unused · last 30 days</p>
         </div>
         <button onClick={handleDownload} disabled={downloading}
-          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-60 transition-all">
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--glass-2)] px-5 py-2.5 text-sm font-semibold text-[var(--fg-1)] hover:bg-[var(--glass-3)] disabled:opacity-60 transition-all">
           {downloading ? (
             <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
           ) : (
