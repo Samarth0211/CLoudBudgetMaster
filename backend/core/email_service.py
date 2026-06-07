@@ -157,6 +157,29 @@ async def send_alert_email(to_email: str, alert_data: dict) -> bool:
     return _send_email(to_email, subject, _base_template(content))
 
 
+def send_new_post_notification(to_email: str, post: dict, post_url: str, unsubscribe_url: str) -> bool:
+    """Notify a subscriber about a newly published blog post."""
+    def esc(s):
+        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    title = esc(post.get("title"))
+    excerpt = esc(post.get("meta_description") or post.get("excerpt") or "")
+    category = esc(post.get("category") or "FinOps")
+    content = f"""
+    <p style="color:#FF9900;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 8px 0;">New on the blog &middot; {category}</p>
+    <h2 style="color:#ffffff;font-size:20px;line-height:1.3;margin:0 0 12px 0;">{title}</h2>
+    <p style="color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 24px 0;">{excerpt}</p>
+    <div style="margin-bottom:8px;">
+      <a href="{post_url}" style="display:inline-block;background:#FF9900;color:#1a1205;padding:11px 26px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px;">Read the full article →</a>
+    </div>
+    <p style="color:#64748b;font-size:12px;margin:24px 0 0 0;">
+      You're receiving this because you have a CloudBudgetMaster account.
+      <a href="{unsubscribe_url}" style="color:#64748b;text-decoration:underline;">Unsubscribe from blog emails</a>.
+    </p>
+    """
+    return _send_email(to_email, f"{post.get('title')} — CloudBudgetMaster", _base_template(content))
+
+
 def _friendly_rule_type(rule_type: str) -> str:
     return {
         "daily_cost_above": "Daily Cost Exceeded",

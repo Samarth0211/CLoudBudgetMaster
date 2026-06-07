@@ -4,6 +4,7 @@ Mutations re-render the static SEO HTML (see services/blog_render). Mounted at
 /v1/blog. Public pages are served as static files from the nginx dist.
 """
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone
@@ -11,6 +12,7 @@ from datetime import datetime, timezone
 from backend.db.client import get_db
 from backend.config import get_settings
 from backend.dependencies import require_admin
+from backend.core.security import verify_unsub_token
 from backend.services.blog_render import regenerate, slugify, reading_time, CATEGORIES
 from backend.services.search_ping import notify
 
@@ -90,6 +92,34 @@ async def get_published(slug: str):
 @router.get("/categories")
 async def categories():
     return {"categories": CATEGORIES}
+
+
+@router.get("/unsubscribe", response_class=HTMLResponse)
+async def unsubscribe(token: str = ""):
+    uid = verify_unsub_token(token)
+    if uid:
+        get_db().table("profiles").update({"blog_opt_out": True}).eq("id", uid).execute()
+        msg, ok = "You've been unsubscribed from CloudBudgetMaster blog emails.", True
+    else:
+        msg, ok = "This unsubscribe link is invalid.", False
+    site = get_settings().site_url
+    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Unsubscribe — CloudBudgetMaster</title></head>
+<body style="margin:0;background:#0B1220;color:#e2e8f0;font-family:system-ui,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center">
+<div style="max-width:440px;text-align:center;padding:32px">
+<div style="font-size:40px;margin-bottom:12px">{'✓' if ok else '⚠'}</div>
+<h1 style="font-size:20px;color:#fff;margin:0 0 10px">{msg}</h1>
+<p style="color:#94a3b8;font-size:14px;margin:0 0 22px">You'll still receive account and cost-alert emails.</p>
+<a href="{site}" style="display:inline-block;background:#FF9900;color:#1a1205;padding:10px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14px">Back to CloudBudgetMaster</a>
+</div></body></html>""")
+
+
+@router.post("/admin/generate")
+async def admin_generate(admin=Depends(require_admin)):
+    """Generate + publish a post now and email subscribers (manual trigger / test)."""
+    from backend.services.daily_blog import run_daily
+    return run_daily(get_db(), force=True)
 
 
 # ── admin ────────────────────────────────────────────────────────────────────

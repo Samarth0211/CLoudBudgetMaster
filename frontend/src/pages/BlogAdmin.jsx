@@ -46,10 +46,17 @@ export default function BlogAdmin() {
           <h1 className="text-2xl font-bold text-white">Blog</h1>
           <p className="mt-1 text-sm text-slate-400">Write SEO-optimized posts. Publishing instantly generates a static page + updates the sitemap.</p>
         </div>
-        <button onClick={() => setEditing({ ...EMPTY })}
-          className="inline-flex items-center gap-2 rounded-xl bg-[#FF9900] px-5 py-2.5 text-sm font-semibold text-[#1a1205] hover:brightness-105 transition-all">
-          + New Post
-        </button>
+        <div className="flex items-center gap-2">
+          <GenerateButton onDone={load} />
+          <button onClick={() => setEditing({ ...EMPTY })}
+            className="inline-flex items-center gap-2 rounded-xl bg-[#FF9900] px-5 py-2.5 text-sm font-semibold text-[#1a1205] hover:brightness-105 transition-all">
+            + New Post
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 rounded-xl border border-white/10 bg-[#232F3E]/60 px-4 py-3 text-xs text-slate-400">
+        <span className="font-medium text-slate-300">Automated daily posts</span> — every day at 8:00 AM IST an open-source AI writes &amp; publishes a new post and emails your subscribers. Use <span className="text-slate-300">Generate with AI</span> to run it now.
       </div>
 
       <div className="rounded-2xl border border-white/10 bg-[#232F3E] overflow-hidden">
@@ -85,6 +92,24 @@ export default function BlogAdmin() {
         )}
       </div>
     </div>
+  )
+}
+
+function GenerateButton({ onDone }) {
+  const [busy, setBusy] = useState(false)
+  const run = () => {
+    if (!confirm('Generate and publish a new AI post now, and email subscribers?')) return
+    setBusy(true)
+    api.post('/blog/admin/generate')
+      .then(r => { const d = r.data || {}; alert(d.status === 'published' ? `Published: ${d.title}\nEmailed ${d.emailed} subscriber(s).` : `Skipped: ${d.reason || 'already posted recently'}`) })
+      .catch(e => alert(e?.response?.data?.detail || 'Generation failed'))
+      .finally(() => { setBusy(false); onDone() })
+  }
+  return (
+    <button onClick={run} disabled={busy}
+      className="inline-flex items-center gap-2 rounded-xl border border-[#FF9900]/40 px-4 py-2.5 text-sm font-semibold text-[#FF9900] hover:bg-[#FF9900]/10 disabled:opacity-60 transition-all">
+      {busy ? 'Generating…' : '✨ Generate with AI'}
+    </button>
   )
 }
 

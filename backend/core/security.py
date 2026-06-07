@@ -1,5 +1,7 @@
 """Self-hosted auth primitives: bcrypt password hashing + HS256 JWTs."""
 import time
+import hmac
+import hashlib
 import bcrypt
 import jwt
 from backend.config import get_settings
@@ -40,3 +42,19 @@ def decode_token(token: str) -> str | None:
         return data.get("sub")
     except Exception:
         return None
+
+
+def make_unsub_token(user_id: str) -> str:
+    """Non-expiring, signed token for one-click email unsubscribe links."""
+    sig = hmac.new(_secret().encode(), f"unsub:{user_id}".encode(), hashlib.sha256).hexdigest()[:20]
+    return f"{user_id}.{sig}"
+
+
+def verify_unsub_token(token: str) -> str | None:
+    """Return the user id if the unsubscribe token is valid, else None."""
+    try:
+        user_id, sig = token.rsplit(".", 1)
+    except (ValueError, AttributeError):
+        return None
+    expected = hmac.new(_secret().encode(), f"unsub:{user_id}".encode(), hashlib.sha256).hexdigest()[:20]
+    return user_id if hmac.compare_digest(sig, expected) else None

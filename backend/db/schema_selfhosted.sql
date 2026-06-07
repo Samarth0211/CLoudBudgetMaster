@@ -127,3 +127,6 @@ CREATE TABLE IF NOT EXISTS blog_posts (
   published_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts (status, published_at DESC);
+
+-- Email preference for the daily blog digest (opt-out).
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS blog_opt_out BOOLEAN DEFAULT FALSE;
