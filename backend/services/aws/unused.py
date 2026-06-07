@@ -1,9 +1,18 @@
 import boto3
 from datetime import datetime, timedelta
 
-# Cost estimates per resource type
+from backend.services.aws.pricing import ec2_monthly_cost, rds_monthly_cost
+
+# Cost estimates per resource type (fallback when the Pricing API is unavailable).
 EBS_COST_PER_GB = {"gp3": 0.08, "gp2": 0.10, "io1": 0.125, "io2": 0.125, "st1": 0.045, "sc1": 0.015, "standard": 0.05}
 EIP_MONTHLY_COST = 3.65
+
+# Human-readable basis shown in the UI / report next to each figure.
+_BASIS = {
+    "aws_pricing_api": "AWS on-demand list price",
+    "estimate": "Estimated on-demand price",
+    "exact": "Exact AWS rate",
+}
 
 
 def _lookup_instance_creator(cloudtrail, instance_id: str, tags: dict) -> str | None:
@@ -95,6 +104,7 @@ def detect_stopped_ec2(access_key_id: str, secret_access_key: str, region: str):
                     "waste_monthly_cost_usd": round(ebs_cost, 2),
                     "metadata": {
                         "instance_type": instance_type,
+                        "cost_source": "exact", "cost_basis": _BASIS["exact"],
                         "created_by": created_by,
                         "key_name": inst.get("KeyName"),
                         "launch_time": inst.get("LaunchTime").isoformat() if inst.get("LaunchTime") else None,
@@ -125,7 +135,9 @@ def detect_idle_ec2(access_key_id: str, secret_access_key: str, region: str):
             instance_id = inst["InstanceId"]
             instance_type = inst.get("InstanceType", "unknown")
             name = _get_tag(inst.get("Tags", []), "Name") or instance_id
-            estimated_cost = _estimate_ec2_cost(instance_type)
+            platform = inst.get("PlatformDetails", "Linux/UNIX")
+            api_cost, cost_source = ec2_monthly_cost(access_key_id, secret_access_key, instance_type, region, platform)
+            estimated_cost = api_cost if api_cost is not None else _estimate_ec2_cost(instance_type)
 
             end_time = datetime.utcnow()
             start_time = end_time - timedelta(days=14)
@@ -157,10 +169,12 @@ def detect_idle_ec2(access_key_id: str, secret_access_key: str, region: str):
                 "metadata": {
                     "instance_type": instance_type,
                     "avg_cpu_14d": round(avg_cpu, 2) if avg_cpu is not None else None,
+                    "cost_source": cost_source,
+                    "cost_basis": _BASIS.get(cost_source, _BASIS["estimate"]),
                     "created_by": created_by,
                     "key_name": inst.get("KeyName"),
                     "launch_time": inst.get("LaunchTime").isoformat() if inst.get("LaunchTime") else None,
-                    "platform": inst.get("PlatformDetails", "Linux/UNIX"),
+                    "platform": platform,
                     "private_ip": inst.get("PrivateIpAddress"),
                     "public_ip": inst.get("PublicIpAddress"),
                     "vpc_id": inst.get("VpcId"),
@@ -197,6 +211,7 @@ def detect_unattached_ebs(access_key_id: str, secret_access_key: str, region: st
             "waste_reason": f"Unattached {vol_type} volume ({size_gb} GB)",
             "waste_monthly_cost_usd": round(cost, 2),
             "metadata": {"volume_type": vol_type, "size_gb": size_gb,
+                          "cost_source": "exact", "cost_basis": _BASIS["exact"],
                           "tags": _tags_to_dict(vol.get("Tags", []))},
         })
 
@@ -216,7 +231,9 @@ def detect_idle_rds(access_key_id: str, secret_access_key: str, region: str):
     for db in db_instances.get("DBInstances", []):
         db_id = db["DBInstanceIdentifier"]
         db_class = db.get("DBInstanceClass", "unknown")
-        estimated_cost = _estimate_rds_cost(db_class)
+        engine = db.get("Engine", "mysql")
+        api_cost, cost_source = rds_monthly_cost(access_key_id, secret_access_key, db_class, region, engine, db.get("MultiAZ", False))
+        estimated_cost = api_cost if api_cost is not None else _estimate_rds_cost(db_class)
 
         end_time = datetime.utcnow()
         start_time = end_time - timedelta(days=7)
@@ -241,6 +258,7 @@ def detect_idle_rds(access_key_id: str, secret_access_key: str, region: str):
             "waste_reason": "Zero database connections for 7 days — no application is using this database" if is_idle else None,
             "waste_monthly_cost_usd": round(estimated_cost, 2) if is_idle else 0,
             "metadata": {"db_class": db_class, "engine": db.get("Engine", ""),
+                          "cost_source": cost_source, "cost_basis": _BASIS.get(cost_source, _BASIS["estimate"]),
                           "storage_gb": db.get("AllocatedStorage", 0),
                           "total_connections_7d": total_connections},
         })
@@ -269,6 +287,7 @@ def detect_unassociated_eips(access_key_id: str, secret_access_key: str, region:
                 "waste_reason": "Elastic IP not associated to any resource ($3.65/mo since Feb 2024)",
                 "waste_monthly_cost_usd": EIP_MONTHLY_COST,
                 "metadata": {"public_ip": addr.get("PublicIp", ""),
+                              "cost_source": "exact", "cost_basis": _BASIS["exact"],
                               "tags": _tags_to_dict(addr.get("Tags", []))},
             })
 
