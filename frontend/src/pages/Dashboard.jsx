@@ -252,7 +252,7 @@ export default function Dashboard() {
                           strokeDasharray={`${(summary.waste_percentage / 100) * 314} 314`} className="donut-animate" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="font-mono text-2xl font-semibold text-white">{summary.waste_percentage}%</span>
+                        <span className="font-mono text-lg font-semibold text-white">{summary.waste_percentage}%</span>
                         <span className="text-[11px] text-slate-500">wasted</span>
                       </div>
                     </div>
