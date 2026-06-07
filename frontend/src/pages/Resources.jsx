@@ -215,8 +215,8 @@ export default function Resources() {
                           {badge.label}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        {typeInfo.label} &middot; {r.region} &middot; <span className="font-mono">{r.resource_id}</span>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate" title={r.resource_id}>
+                        {typeInfo.label} &middot; {r.region} &middot; <span className="font-mono">{(r.resource_id || '').startsWith('arn:') ? r.resource_id.split(/[:/]/).pop() : r.resource_id}</span>
                       </p>
                     </div>
 

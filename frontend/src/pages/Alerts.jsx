@@ -112,11 +112,11 @@ export default function Alerts() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-white/5 rounded-xl p-1 w-fit">
+      <div className="inline-flex gap-1 mb-6 bg-[var(--glass-2)] border border-[var(--border)] rounded-xl p-1 w-fit">
         {['events', 'rules'].map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              tab === t ? 'bg-white/10 text-white' : 'text-slate-400 hover:text-white'
+              tab === t ? 'bg-[var(--ink)] text-[var(--fg)] shadow-sm' : 'text-slate-400 hover:text-[var(--fg)]'
             }`}>
             {t === 'events' ? `Alert History${undismissedCount > 0 ? ` (${undismissedCount})` : ''}` : 'Rules'}
           </button>

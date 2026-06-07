@@ -246,7 +246,7 @@ function Hero({ onCta }) {
         </div>
         <h1 className="reveal mx-auto mt-7 max-w-4xl text-[40px] font-extrabold leading-[1.04] tracking-[-0.025em] text-white sm:text-[58px] lg:text-[72px]">
           Stop burning money on<br className="hidden sm:block" />
-          <span className="grad-orange-text"> idle cloud resources</span>
+          <span className="text-[var(--fg)]" style={{ textDecoration: 'underline', textDecorationColor: 'var(--orange)', textDecorationThickness: '6px', textUnderlineOffset: '8px' }}> idle cloud resources</span>
         </h1>
         <p className="reveal mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-[var(--fg-3)] sm:text-[20px]">
           CloudBudgetMaster scans your multi-cloud infrastructure with read-only access, surfaces every wasted dollar, and alerts you before costs spiral. Setup takes under 5 minutes.
@@ -679,7 +679,7 @@ function Footer() {
             </div>
           ))}
         </div>
-        <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--border-soft)] pt-8">
+        <div className="mt-14 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[var(--border-soft)] pt-8 pb-24 sm:pb-8">
           <p className="text-[13px] text-[var(--fg-4)]">© 2026 CloudBudgetMaster, Inc. All rights reserved.</p>
           <div className="flex items-center gap-6 text-[13px] text-[var(--fg-4)]">
             <Link to="/privacy" className="hover:text-[var(--fg-2)]">Privacy</Link>
@@ -694,10 +694,9 @@ function Footer() {
 
 function ChatBubble({ onClick }) {
   return (
-    <button onClick={onClick}
-      className="group fixed bottom-6 right-6 z-[70] flex items-center gap-2.5 rounded-full py-3 pl-3.5 pr-5 text-[14px] font-semibold text-[#1a1205] shadow-[var(--glow-orange)] transition-transform hover:scale-105"
-      style={{ background: 'var(--grad-orange)' }}>
-      <span className="grid h-7 w-7 place-items-center rounded-full bg-[#1a1205]/15">
+    <button onClick={onClick} aria-label="Ask the cost AI"
+      className="group fixed bottom-5 right-5 z-[60] flex items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--ink)] py-2 pl-2 pr-2 sm:pr-4 text-[13px] font-medium text-[var(--fg-1)] shadow-lg transition-colors hover:bg-[var(--ink-2)]">
+      <span className="grid h-7 w-7 place-items-center rounded-full bg-[#FF9900]/15 text-[#FF9900]">
         <Icon d={PATHS.spark} className="h-4 w-4" sw={2} />
       </span>
       <span className="hidden sm:inline">Ask the cost AI</span>

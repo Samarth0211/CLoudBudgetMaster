@@ -79,8 +79,13 @@ export default function Compare() {
 
       {/* Comparison Table */}
       {resources.length < 2 ? (
-        <div className="rounded-2xl border-2 border-dashed border-white/10 bg-white/5 p-12 text-center">
-          <p className="text-sm text-slate-400">Select at least 2 resources to compare</p>
+        <div className="rounded-2xl border-2 border-dashed border-[var(--border)] bg-[var(--glass-1)] p-12 text-center">
+          <div className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-[#FF9900]/10 text-[#FF9900]">
+            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+          </div>
+          <h3 className="mt-4 text-sm font-semibold text-[var(--fg)]">Compare resources side by side</h3>
+          <p className="mt-1.5 text-sm text-slate-500 max-w-sm mx-auto">Pick <strong className="text-[var(--fg-2)]">2–4 resources</strong> from the list above to line up their cost, region, status, and waste for an easy comparison.</p>
+          <p className="mt-3 text-xs font-medium text-slate-500">{selectedIds.size} selected</p>
         </div>
       ) : (
         <div className="rounded-2xl border border-white/10 bg-[#232F3E] overflow-hidden">

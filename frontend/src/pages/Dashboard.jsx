@@ -262,29 +262,31 @@ export default function Dashboard() {
 
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <div className="rounded-lg bg-slate-800/50 p-2.5 text-center">
-                      <p className="font-mono text-sm font-semibold text-white">${summary.total_waste_cost_usd.toLocaleString()}</p>
-                      <p className="text-[11px] text-slate-500">saveable</p>
+                      <p className="font-mono text-sm font-semibold text-emerald-500">${summary.total_waste_cost_usd.toLocaleString()}</p>
+                      <p className="text-[11px] text-slate-500">recoverable / mo</p>
                     </div>
                     <div className="rounded-lg bg-slate-800/50 p-2.5 text-center">
-                      <p className="font-mono text-sm font-semibold text-white">{summary.unused_resources}</p>
-                      <p className="text-[11px] text-slate-500">unused</p>
+                      <p className="font-mono text-sm font-semibold text-slate-200">{summary.unused_resources}</p>
+                      <p className="text-[11px] text-slate-500">idle resources</p>
                     </div>
                   </div>
                 </div>
               )}
 
               <div className="rounded-xl border border-slate-800 bg-[#232F3E] p-4">
-                <p className="text-xs font-medium text-slate-500 mb-2.5">Quick actions</p>
-                <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 mb-3">Quick actions</p>
+                <div className="space-y-2">
                   <button onClick={() => navigate('/resources')}
-                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 transition-colors">
-                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                    Review resources
+                    className="group w-full flex items-center gap-3 rounded-lg border border-slate-800 bg-white/[0.02] px-3 py-2.5 text-left hover:border-slate-700 hover:bg-white/5 transition-colors">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#FF9900]/10 text-[#FF9900]"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></span>
+                    <span className="flex-1"><span className="block text-sm font-medium text-slate-200">Review resources</span><span className="block text-[11px] text-slate-500">Inspect every flagged item</span></span>
+                    <svg className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
                   </button>
                   <button onClick={() => navigate('/connections')}
-                    className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm text-slate-300 hover:bg-slate-800 transition-colors">
-                    <svg className="h-4 w-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-                    Add connection
+                    className="group w-full flex items-center gap-3 rounded-lg border border-slate-800 bg-white/[0.02] px-3 py-2.5 text-left hover:border-slate-700 hover:bg-white/5 transition-colors">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#3FA9F5]/10 text-[#3FA9F5]"><svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg></span>
+                    <span className="flex-1"><span className="block text-sm font-medium text-slate-200">Add connection</span><span className="block text-[11px] text-slate-500">Link another cloud account</span></span>
+                    <svg className="h-4 w-4 text-slate-600 group-hover:text-slate-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/></svg>
                   </button>
                 </div>
               </div>
@@ -432,8 +434,8 @@ function StatCard({ label, value, change, sub, warn }) {
       <p className="font-mono text-2xl font-semibold tracking-tight text-white">{value}</p>
       <div className="mt-1">
         {change != null ? (
-          <span className={`text-xs font-medium ${change > 0 ? 'text-red-400' : 'text-emerald-400'}`}>
-            {change > 0 ? '+' : ''}{change}% vs last week
+          <span className={`inline-flex items-center gap-1 text-xs font-medium ${change > 0 ? 'text-[#FF5247]' : 'text-emerald-500'}`}>
+            <Arrow up={change > 0} />{Math.abs(change)}% vs last week
           </span>
         ) : sub ? (
           <span className={`text-xs ${warn ? 'text-amber-400' : 'text-slate-500'}`}>{sub}</span>
