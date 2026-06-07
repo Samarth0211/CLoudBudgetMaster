@@ -13,6 +13,12 @@ __pycache__/
 venv/
 *.egg-info/
 
+# ── Local SQLite storage (VPS) ──
+backend/data/
+*.db
+*.db-wal
+*.db-shm
+
 # ── Node ──
 node_modules/
 frontend/dist/

@@ -1,8 +1,31 @@
+import sqlite3
+from pathlib import Path
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr, constr
-from backend.db.client import get_supabase
 
 router = APIRouter(prefix="/contact", tags=["contact"])
+
+# Stored locally on the VPS (no external DB). File lives next to the backend.
+_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "contact.db"
+
+
+def _get_conn() -> sqlite3.Connection:
+    _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(_DB_PATH), timeout=10)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute(
+        """CREATE TABLE IF NOT EXISTS contact_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            company TEXT,
+            message TEXT NOT NULL,
+            handled INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL
+        )"""
+    )
+    return conn
 
 
 class ContactRequest(BaseModel):
@@ -14,17 +37,16 @@ class ContactRequest(BaseModel):
 
 @router.post("", status_code=201)
 async def submit_contact(body: ContactRequest):
-    """Public endpoint — store a contact/demo request. No auth required."""
-    supabase = get_supabase()
+    """Public endpoint — store a contact/demo request in local SQLite. No auth."""
     try:
-        supabase.table("contact_messages").insert({
-            "name": body.name,
-            "email": str(body.email),
-            "company": body.company or None,
-            "message": body.message,
-        }).execute()
+        conn = _get_conn()
+        conn.execute(
+            "INSERT INTO contact_messages (name, email, company, message, created_at) VALUES (?, ?, ?, ?, ?)",
+            (body.name, str(body.email), body.company or None, body.message, datetime.now(timezone.utc).isoformat()),
+        )
+        conn.commit()
+        conn.close()
     except Exception:
-        # Don't leak internals; the row may fail only if the table is missing.
         raise HTTPException(status_code=500, detail="Could not submit your message right now. Please email us directly.")
 
     # Best-effort email notification — never fail the request if email is down.
