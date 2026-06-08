@@ -64,9 +64,12 @@ function ensure(ctx, needed) {
 }
 
 function sectionTitle(ctx, text, note, newPage) {
-  const { doc, W } = ctx
-  if (newPage && ctx.y > 72) { doc.addPage(); ctx.y = 64 }
-  else ensure(ctx, 44)
+  const { doc, W, H } = ctx
+  // Sections flow and fill the page; only break to a new page when there isn't
+  // enough room left (avoids one-bar-on-an-empty-page while keeping sections intact).
+  const remaining = (H - 60) - ctx.y
+  if (newPage && ctx.y > 72 && remaining < 300) { doc.addPage(); ctx.y = 64 }
+  else { if (ctx.y > 72) ctx.y += 14; ensure(ctx, 44) }
   doc.setTextColor(...INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(13)
   doc.text(text, MARGIN, ctx.y)
   if (note) { doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(...GREY); doc.text(note, W - MARGIN, ctx.y, { align: 'right' }) }

@@ -44,8 +44,12 @@ async function fetchAllResources() {
 }
 
 // Assemble the factual brief the AI model grounds its narrative in (no invented numbers).
-function buildAiContext({ sum, svc, fc, conns, res, acct }) {
-  const monthly = sum?.total_monthly_cost_usd || 0
+// monthly_cost MUST be the actual cloud bill (Cost Explorer), not the monitored-resource
+// sum — otherwise the AI narrative contradicts the report's headline numbers.
+function buildAiContext({ sum, svc, fc, conns, res, acct, tr }) {
+  const monitored = sum?.total_monthly_cost_usd || 0
+  const trendTotal = (tr || []).reduce((s, p) => s + (p.total_cost_usd || 0), 0)
+  const monthly = trendTotal > 0 ? trendTotal : (fc?.current_monthly ?? monitored)
   const waste = sum?.total_waste_cost_usd || 0
   const isWaste = (r) => r.waste_status && r.waste_status !== 'active'
   return {
@@ -99,7 +103,7 @@ export default function SavingsReport() {
       setLoading(false)
 
       // AI narrative (Kimi K2 via Groq) — non-blocking, the page is already usable.
-      api.post('/dashboard/ai-insights', buildAiContext({ sum, svc, fc, conns, res, acct }))
+      api.post('/dashboard/ai-insights', buildAiContext({ sum, svc, fc, conns, res, acct, tr }))
         .then(r => setInsights(r.data))
         .catch(() => setInsights(null))
         .finally(() => setAiLoading(false))
@@ -113,7 +117,7 @@ export default function SavingsReport() {
       let ins = insights
       if (!ins) {
         try {
-          const r = await api.post('/dashboard/ai-insights', buildAiContext({ sum: summary, svc: services, fc: forecast, conns: connections, res: resources, acct: account }))
+          const r = await api.post('/dashboard/ai-insights', buildAiContext({ sum: summary, svc: services, fc: forecast, conns: connections, res: resources, acct: account, tr: trend }))
           ins = r.data; setInsights(r.data)
         } catch { ins = null }
       }
