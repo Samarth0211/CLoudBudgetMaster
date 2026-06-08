@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import BrandLogo from '../components/shared/BrandLogo'
 import ThemeToggle from '../components/shared/ThemeToggle'
 import PublicChat from '../components/PublicChat'
+import JsonLd from '../components/shared/JsonLd'
 
 /* ============================================================================
    CloudBudgetMaster — AWS-flavored landing page (Smile Orange on squid-ink navy).
@@ -711,6 +712,14 @@ export default function LandingPage() {
   const signIn = () => navigate('/login')
   return (
     <div id="top" className="min-h-screen bg-[var(--canvas)]">
+      <JsonLd data={{
+        '@context': 'https://schema.org', '@type': 'SoftwareApplication',
+        name: 'CloudBudgetMaster', applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web', url: 'https://cloudbudgetmaster.com',
+        description: 'Multi-cloud cost monitoring. Connect AWS & GCP read-only and find idle, unused, and overspending resources with exact monthly savings.',
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', description: 'Free forever plan, no credit card' },
+        publisher: { '@type': 'Organization', name: 'CloudBudgetMaster', url: 'https://cloudbudgetmaster.com', logo: 'https://cloudbudgetmaster.com/logo.png' },
+      }} />
       <LandingNav onCta={start} onSignIn={signIn} />
       <main>
         <Hero onCta={start} />

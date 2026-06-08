@@ -14,7 +14,8 @@ import { join, extname, dirname } from 'path'
 const DIST = 'dist'
 const PORT = 5099
 // Public, indexable pages only. NOT the dashboard/app or the (already-static) blog.
-const ROUTES = ['/', '/pricing', '/about', '/security', '/contact', '/privacy', '/terms']
+const ROUTES = ['/', '/pricing', '/about', '/security', '/contact', '/privacy', '/terms',
+  '/tools/aws-waste-finder', '/vs/vantage', '/vs/spot', '/vs/finout']
 
 const MIME = {
   '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css',

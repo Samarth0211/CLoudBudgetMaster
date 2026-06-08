@@ -22,6 +22,8 @@ import About from './pages/About'
 import Contact from './pages/Contact'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import AwsWasteFinder from './pages/AwsWasteFinder'
+import VsPage from './pages/VsPage'
 import ChatWidget from './components/ChatWidget'
 import OnboardingTour from './components/OnboardingTour'
 import LoadingSpinner from './components/shared/LoadingSpinner'
@@ -94,6 +96,8 @@ export default function App() {
         </ProtectedRoute>
       } />
       <Route path="/pricing" element={<Pricing />} />
+      <Route path="/tools/aws-waste-finder" element={<AwsWasteFinder />} />
+      <Route path="/vs/:slug" element={<VsPage />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
       <Route path="/security" element={<Security />} />

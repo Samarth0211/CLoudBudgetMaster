@@ -239,7 +239,8 @@ def render_index_html(posts: list) -> str:
 
 def render_sitemap(posts: list) -> str:
     s = get_settings()
-    statics = ["/", "/pricing", "/about", "/blog", "/contact", "/security", "/privacy", "/terms"]
+    statics = ["/", "/pricing", "/about", "/blog", "/contact", "/security", "/privacy", "/terms",
+               "/tools/aws-waste-finder", "/vs/vantage", "/vs/spot", "/vs/finout"]
     urls = [f"  <url><loc>{s.site_url}{p}</loc><changefreq>weekly</changefreq><priority>0.7</priority></url>" for p in statics]
     for p in posts:
         lm = _iso(p.get("updated_at") or p.get("published_at"))[:10]
@@ -249,7 +250,10 @@ def render_sitemap(posts: list) -> str:
 
 def render_robots() -> str:
     s = get_settings()
-    return f"User-agent: *\nAllow: /\n\nSitemap: {s.site_url}/sitemap.xml\n"
+    disallow = ["/dashboard", "/resources", "/connections", "/alerts",
+                "/savings-report", "/compare", "/settings", "/admin", "/login", "/register"]
+    lines = ["User-agent: *", "Allow: /"] + [f"Disallow: {d}" for d in disallow]
+    return "\n".join(lines) + f"\n\nSitemap: {s.site_url}/sitemap.xml\n"
 
 
 # ── filesystem sync ──────────────────────────────────────────────────────────
