@@ -75,10 +75,29 @@ async def dashboard_summary(
     # Cost trend WoW from cost_snapshots
     wow_percent, wow_usd = _calc_wow_change(db, conn_ids)
 
-    waste_pct = round((total_waste / total_cost * 100), 2) if total_cost > 0 else 0
+    # Actual cloud bill (Cost Explorer, last 30 days). total_cost above is only the
+    # cost of resources we scan for waste (EC2/RDS/EBS/EIP); the real bill includes
+    # Redshift, containers, etc. The headline + waste % must use the real bill, or
+    # "% recoverable" looks absurd (e.g. 80% instead of ~21%).
+    actual_total, actual_per_conn = _actual_spend(db, conn_ids)
+    prov_by_conn = {c["id"]: c["provider"] for c in (conns.data or [])}
+    actual_per_provider = {}
+    for cid, amt in actual_per_conn.items():
+        p = prov_by_conn.get(cid)
+        if p:
+            actual_per_provider[p] = actual_per_provider.get(p, 0) + amt
+
+    billed_total = actual_total if actual_total > 0 else total_cost
+    for p in by_provider.values():
+        ap = actual_per_provider.get(p["provider"])
+        if ap is not None:
+            p["monthly_cost_usd"] = round(ap, 2)
+
+    waste_pct = round((total_waste / billed_total * 100), 2) if billed_total > 0 else 0
 
     return {
-        "total_monthly_cost_usd": round(total_cost, 2),
+        "total_monthly_cost_usd": round(billed_total, 2),
+        "monitored_cost_usd": round(total_cost, 2),
         "total_waste_cost_usd": round(total_waste, 2),
         "waste_percentage": waste_pct,
         "total_resources": total_resources,
@@ -412,6 +431,24 @@ async def cost_by_service(
         for k, v in sorted(merged.items(), key=lambda x: x[1], reverse=True) if v > 0
     ]
     return {"services": services, "total": round(total, 2), "days": len(dates)}
+
+
+def _actual_spend(db, conn_ids: list) -> tuple[float, dict]:
+    """Actual cloud spend over the last 30 days from Cost Explorer snapshots.
+    Returns (total_usd, {connection_id: usd})."""
+    from datetime import datetime, timedelta
+    try:
+        cutoff = (datetime.utcnow().date() - timedelta(days=30)).isoformat()
+        snaps = db.table("cost_snapshots").select("connection_id, total_cost_usd") \
+            .in_("connection_id", conn_ids).gte("snapshot_date", cutoff).execute()
+        per_conn, total = {}, 0.0
+        for s in (snaps.data or []):
+            c = s.get("total_cost_usd", 0) or 0
+            total += c
+            per_conn[s["connection_id"]] = per_conn.get(s["connection_id"], 0) + c
+        return round(total, 2), per_conn
+    except Exception:
+        return 0.0, {}
 
 
 def _calc_wow_change(db, conn_ids: list) -> tuple[float, float]:
