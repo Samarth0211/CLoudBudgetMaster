@@ -122,6 +122,23 @@ async def list_resources(
     result = query.execute()
     total = result.count or 0
 
+    # Aggregate cost/waste over ALL matching resources (not just this page), so the
+    # header total is correct regardless of pagination.
+    agg_q = db.table("resources").select("monthly_cost_usd, waste_monthly_cost_usd").in_("connection_id", conn_ids)
+    if provider:
+        agg_q = agg_q.eq("provider", provider)
+    if waste_status:
+        agg_q = agg_q.eq("waste_status", waste_status)
+    if resource_type:
+        agg_q = agg_q.eq("resource_type", resource_type)
+    if connection_id:
+        agg_q = agg_q.eq("connection_id", connection_id)
+    if search:
+        agg_q = agg_q.or_(f"resource_name.ilike.%{search}%,resource_id.ilike.%{search}%")
+    agg = agg_q.execute().data or []
+    total_monthly_cost = round(sum(x.get("monthly_cost_usd", 0) or 0 for x in agg), 2)
+    total_waste_cost = round(sum(x.get("waste_monthly_cost_usd", 0) or 0 for x in agg), 2)
+
     # Attach fix recommendations (only for wasteful resources)
     resources = []
     for r in (result.data or []):
@@ -134,6 +151,8 @@ async def list_resources(
     return {
         "resources": resources,
         "total": total,
+        "total_monthly_cost_usd": total_monthly_cost,
+        "total_waste_cost_usd": total_waste_cost,
         "page": page,
         "page_size": page_size,
         "total_pages": (total + page_size - 1) // page_size,

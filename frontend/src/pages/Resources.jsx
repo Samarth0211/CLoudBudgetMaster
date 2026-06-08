@@ -20,6 +20,8 @@ export default function Resources() {
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
+  const [totalCost, setTotalCost] = useState(0)
+  const [totalWasteSum, setTotalWasteSum] = useState(0)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
   const [search, setSearch] = useState('')
@@ -45,6 +47,8 @@ export default function Resources() {
       const { data } = await api.get(`/resources?${params}`)
       setResources(data.resources || [])
       setTotal(data.total || 0)
+      setTotalCost(data.total_monthly_cost_usd || 0)
+      setTotalWasteSum(data.total_waste_cost_usd || 0)
       setTotalPages(data.total_pages || 0)
     } catch (err) {
       console.error('Failed to fetch resources:', err)
@@ -84,18 +88,15 @@ export default function Resources() {
     })
   }
 
-  const totalMonthlyCost = resources.reduce((sum, r) => sum + (r.monthly_cost_usd || 0), 0)
-  const totalWaste = resources.reduce((sum, r) => sum + (r.waste_monthly_cost_usd || 0), 0)
-
   return (
     <div className="animate-fade-up">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-white">Resources</h1>
         <p className="mt-1 text-sm text-slate-400">
-          {total} resources found
-          {totalMonthlyCost > 0 && <span> &middot; <span className="font-mono text-white font-medium">${totalMonthlyCost.toFixed(0)}/mo</span> total cost</span>}
-          {totalWaste > 0 && <span> &middot; <span className="font-mono text-red-400 font-medium">${totalWaste.toFixed(0)}/mo</span> potential savings</span>}
+          {total} monitored resources
+          {totalCost > 0 && <span> &middot; <span className="font-mono text-white font-medium">${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</span> resource cost</span>}
+          {totalWasteSum > 0 && <span> &middot; <span className="font-mono text-red-400 font-medium">${totalWasteSum.toLocaleString(undefined, { maximumFractionDigits: 0 })}/mo</span> potential savings</span>}
         </p>
       </div>
 

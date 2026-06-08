@@ -131,10 +131,13 @@ async def dashboard_trend(
     if not conn_ids:
         return {"data_points": [], "period_start": None, "period_end": None}
 
-    # Get cost snapshots
+    # Get cost snapshots for the requested window (matches the summary's 30-day bill)
+    from datetime import datetime, timedelta
+    cutoff = (datetime.utcnow().date() - timedelta(days=days)).isoformat()
     snapshots = db.table("cost_snapshots") \
         .select("snapshot_date, total_cost_usd") \
         .in_("connection_id", conn_ids) \
+        .gte("snapshot_date", cutoff) \
         .order("snapshot_date") \
         .execute()
 
