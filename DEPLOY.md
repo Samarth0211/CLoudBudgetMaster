@@ -27,6 +27,13 @@ verified deploy procedure.
    cd /var/www/cloudbudgetmaster && git fetch origin && git reset --hard origin/main && cd frontend && npm install && npm run build
    ```
    Vite writes to `frontend/dist`, which nginx already serves — **no nginx reload needed**.
+   `npm run build` now also runs `node prerender.mjs` (Puppeteer) to render the 7
+   public marketing pages to real HTML in `dist/` for SEO. It's **best-effort** —
+   if Chromium can't launch, the build still succeeds with the SPA shell. Chromium
+   runtime libs are installed on the VPS (apt: libnss3, libatk-bridge2.0-0t64,
+   libgbm1, etc.); Puppeteer's Chromium is cached in `~/.cache/puppeteer` after the
+   first `npm install`. Verify after deploy that `curl -s https://cloudbudgetmaster.com/ | wc -c`
+   is ~58k (real HTML), not ~4k (empty shell).
    **Then restart the backend:** `systemctl restart cbm-api`. The build wipes `dist/`,
    including the static blog SEO pages (`dist/blog/*`, `sitemap.xml`, `robots.txt`);
    the API regenerates them on startup. Skipping this leaves the blog/sitemap 404 until
