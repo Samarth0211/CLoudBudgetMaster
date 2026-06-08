@@ -109,7 +109,15 @@ export default function SavingsReport() {
   const handleDownload = async () => {
     setDownloading(true)
     try {
-      await generateCostReport({ summary, trend, connections, resources, services, forecast, tags, account, insights })
+      // Make sure the AI narrative is in the PDF even if the user clicks before it loaded.
+      let ins = insights
+      if (!ins) {
+        try {
+          const r = await api.post('/dashboard/ai-insights', buildAiContext({ sum: summary, svc: services, fc: forecast, conns: connections, res: resources, acct: account }))
+          ins = r.data; setInsights(r.data)
+        } catch { ins = null }
+      }
+      await generateCostReport({ summary, trend, connections, resources, services, forecast, tags, account, insights: ins })
     } catch {
       alert('Could not generate the report. Please try again.')
     } finally {
@@ -121,7 +129,10 @@ export default function SavingsReport() {
     return <div className="flex justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-2 border-white/10 border-t-[#FF9900]" /></div>
   }
 
-  const monthlyCost = summary?.total_monthly_cost_usd || 0
+  // Headline = actual cloud bill (Cost Explorer), not the monitored-resource sum.
+  const monitoredCost = summary?.total_monthly_cost_usd || 0
+  const trendTotal = trend.reduce((s, p) => s + (p.total_cost_usd || 0), 0)
+  const monthlyCost = trendTotal > 0 ? trendTotal : (forecast?.current_monthly ?? monitoredCost)
   const wasteCost = summary?.total_waste_cost_usd || 0
   const savingsPercent = monthlyCost > 0 ? ((wasteCost / monthlyCost) * 100).toFixed(1) : 0
   const annualSavings = wasteCost * 12
@@ -156,14 +167,15 @@ export default function SavingsReport() {
       <div className="rounded-2xl border border-white/10 bg-[#232F3E] p-6 mb-6">
         <h2 className="text-lg font-bold text-white mb-4">Executive Summary</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <Kpi label="Monthly Spend" value={money(monthlyCost)}
+          <Kpi label="Cloud Spend (30d)" value={money(monthlyCost)}
             sub={wow !== 0 ? `${wow > 0 ? '▲' : '▼'} ${Math.abs(wow)}% WoW` : null} subColor={wow > 0 ? 'text-[#FF5247]' : 'text-emerald-400'} />
           <Kpi label="Projected Month-end" value={forecast ? money0(forecast.projected_monthly) : '—'}
             sub={forecast ? forecast.trend_direction : null} subColor={forecast?.trend_direction === 'increasing' ? 'text-[#FF5247]' : forecast?.trend_direction === 'decreasing' ? 'text-emerald-400' : 'text-slate-500'} />
-          <Kpi label="Monthly Waste" value={money(wasteCost)} color="text-[#FF5247]" />
-          <Kpi label="Recoverable" value={`${savingsPercent}%`} color="text-amber-400" />
+          <Kpi label="Recoverable Waste" value={money(wasteCost)} color="text-[#FF5247]" />
+          <Kpi label="% of Bill Recoverable" value={`${savingsPercent}%`} color="text-amber-400" />
           <Kpi label="Annual Savings" value={money0(annualSavings)} color="text-emerald-400" />
         </div>
+        <p className="mt-3 text-xs text-slate-500">Cloud Spend is your actual AWS bill (Cost Explorer). Recoverable waste is from monitored compute &amp; storage — EC2, RDS, EBS, Elastic IPs; other services (Redshift, containers…) appear in Cost by Service.</p>
       </div>
 
       {/* AI analysis */}

@@ -169,7 +169,12 @@ export async function generateCostReport({ summary, trend = [], connections = []
   const fmtDate = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
   const ctx = { doc, W, H, y: 0 }
 
-  const monthly = summary?.total_monthly_cost_usd || 0
+  // Headline spend MUST be the actual cloud bill (Cost Explorer), not the sum of
+  // the resources we monitor for waste — otherwise "recoverable %" is computed
+  // against a small subset and looks absurdly high.
+  const trendTotal = trend.reduce((s, p) => s + (p.total_cost_usd || 0), 0)
+  const monitored = summary?.total_monthly_cost_usd || 0  // cost of EC2/RDS/EBS/EIP we scan
+  const monthly = trendTotal > 0 ? trendTotal : (forecast?.current_monthly ?? monitored)
   const waste = summary?.total_waste_cost_usd || 0
   const savingsPct = monthly > 0 ? (waste / monthly) * 100 : 0
   const annual = waste * 12
@@ -191,10 +196,10 @@ export async function generateCostReport({ summary, trend = [], connections = []
   doc.text(`${connections.length} connection${connections.length === 1 ? '' : 's'}  ·  ${totalRes} resources`, W / 2, 334, { align: 'center' })
 
   const heroCards = [
-    ['Monthly Spend', money0(monthly)],
+    ['Cloud Spend (30d)', money0(monthly)],
     ['Projected Month-end', projected != null ? money0(projected) : '—'],
     ['Recoverable Waste', money0(waste)],
-    ['Savings Potential', `${savingsPct.toFixed(0)}%`],
+    ['% of Bill Recoverable', `${savingsPct.toFixed(0)}%`],
   ]
   const hw = (W - 2 * MARGIN - 3 * 12) / 4
   heroCards.forEach((c, i) => {
@@ -213,10 +218,10 @@ export async function generateCostReport({ summary, trend = [], connections = []
   // Executive summary
   sectionTitle(ctx, 'Executive Summary')
   const cards = [
-    ['Monthly Spend', money(monthly), INK, wow !== 0 ? `${wow > 0 ? '+' : '-'}${Math.abs(wow)}% wk/wk` : ''],
+    ['Cloud Spend (30d)', money(monthly), INK, wow !== 0 ? `${wow > 0 ? '+' : '-'}${Math.abs(wow)}% wk/wk` : ''],
     ['Projected Month-end', projected != null ? money0(projected) : '—', INK, forecast?.trend_direction || ''],
-    ['Monthly Waste', money(waste), RED, ''],
-    ['Recoverable', `${savingsPct.toFixed(1)}%`, AMBER, ''],
+    ['Recoverable Waste', money(waste), RED, ''],
+    ['% of Bill Recoverable', `${savingsPct.toFixed(1)}%`, AMBER, ''],
     ['Annual Savings', money0(annual), GREEN, ''],
   ]
   const cw = (W - 2 * MARGIN - 4 * 10) / 5
@@ -230,8 +235,8 @@ export async function generateCostReport({ summary, trend = [], connections = []
   ctx.y += 60 + 16
   doc.setTextColor(70, 70, 70); doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5)
   const para = waste > 0
-    ? `Across ${totalRes} scanned resources in ${connections.length} connection${connections.length === 1 ? '' : 's'}, ${unused} are idle or unused — wasting approximately ${money(waste)} per month (${money0(annual)} per year). Acting on the items in this report recovers about ${savingsPct.toFixed(1)}% of current cloud spend.`
-    : `Across ${totalRes} scanned resources in ${connections.length} connection${connections.length === 1 ? '' : 's'}, no waste was detected. Current cloud spend appears healthy and well-optimized.`
+    ? `Your cloud bill is about ${money(monthly)} over the last 30 days (Cost Explorer). CloudBudgetMaster monitored ${totalRes} compute & storage resources (EC2, RDS, EBS, Elastic IPs) and found ${unused} idle or unused — wasting roughly ${money(waste)} per month (${money0(annual)} per year), about ${savingsPct.toFixed(1)}% of the total bill. The remaining spend (e.g. Redshift, container and other managed services) is broken out in "Cost by Service" but is not yet analyzed for waste.`
+    : `Your cloud bill is about ${money(monthly)} over the last 30 days. Across ${totalRes} monitored resources (EC2, RDS, EBS, Elastic IPs) no idle or unused waste was detected — current spend appears healthy.`
   const lines = doc.splitTextToSize(para, W - 2 * MARGIN)
   doc.text(lines, MARGIN, ctx.y + 2); ctx.y += lines.length * 13 + 18
 
