@@ -82,6 +82,12 @@ async def register(request: Request, body: RegisterRequest):
     code = f"{secrets.randbelow(900000) + 100000}"
     set_code(email, "verify", code)
     send_verification_email(email, code, body.full_name)
+
+    # Notify the founder of the new signup (fire-and-forget, never blocks register).
+    import threading
+    from backend.core.email_service import send_new_signup_notification
+    threading.Thread(target=send_new_signup_notification, args=(body.full_name, email), daemon=True).start()
+
     return {"message": "Verification code sent to your email", "requires_verification": True}
 
 

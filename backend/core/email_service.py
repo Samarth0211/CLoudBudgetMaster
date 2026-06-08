@@ -180,6 +180,28 @@ def send_new_post_notification(to_email: str, post: dict, post_url: str, unsubsc
     return _send_email(to_email, f"{post.get('title')} — CloudBudgetMaster", _base_template(content))
 
 
+def send_new_signup_notification(name: str, email: str) -> bool:
+    """Notify the admin/founder that a new user just registered. Best-effort."""
+    settings = get_settings()
+    admins = [e.strip() for e in (settings.admin_emails or "").split(",") if e.strip()]
+    to = admins[0] if admins else (settings.contact_notify_email or settings.smtp_from_email or settings.smtp_user)
+    if not to:
+        return False
+
+    def esc(s):
+        return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    content = f"""
+    <h2 style="color:#ffffff;font-size:18px;margin:0 0 8px 0;">&#127881; New signup</h2>
+    <p style="color:#94a3b8;font-size:14px;margin:0 0 16px 0;">Someone just created a CloudBudgetMaster account.</p>
+    <table style="width:100%;border-collapse:collapse;">
+      <tr><td style="color:#64748b;font-size:12px;padding:4px 0;width:70px;">Name</td><td style="color:#e7ecf3;font-size:14px;">{esc(name) or '&mdash;'}</td></tr>
+      <tr><td style="color:#64748b;font-size:12px;padding:4px 0;">Email</td><td style="color:#e7ecf3;font-size:14px;">{esc(email)}</td></tr>
+    </table>
+    """
+    return _send_email(to, f"New CloudBudgetMaster signup: {email}", _base_template(content))
+
+
 def _friendly_rule_type(rule_type: str) -> str:
     return {
         "daily_cost_above": "Daily Cost Exceeded",
