@@ -79,16 +79,16 @@ async def register(request: Request, body: RegisterRequest):
         "email_verified": False,
     }).execute()
 
-    code = f"{secrets.randbelow(900000) + 100000}"
-    set_code(email, "verify", code)
-    send_verification_email(email, code, body.full_name)
-
     # Notify the founder of the new signup (fire-and-forget, never blocks register).
     import threading
     from backend.core.email_service import send_new_signup_notification
     threading.Thread(target=send_new_signup_notification, args=(body.full_name, email), daemon=True).start()
 
-    return {"message": "Verification code sent to your email", "requires_verification": True}
+    # Auto-login: drop the user straight into the product. The mandatory
+    # email-verification code was the biggest signup drop-off; verification stays
+    # available (for email deliverability) but is no longer a wall.
+    profile = db.table("profiles").select("*").eq("email", email).single().execute()
+    return _auth_response(profile.data)
 
 
 class VerifyOTPRequest(BaseModel):
@@ -124,8 +124,6 @@ async def login(request: Request, body: LoginRequest):
         raise HTTPException(status_code=401, detail="Invalid email or password")
     if not verify_password(body.password, profile.data.get("password_hash")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
-    if not profile.data.get("email_verified"):
-        raise HTTPException(status_code=403, detail="Please verify your email before signing in.")
 
     return _auth_response(profile.data)
 

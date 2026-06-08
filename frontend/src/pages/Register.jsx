@@ -36,8 +36,13 @@ export default function Register() {
 
     setLoading(true)
     try {
-      await api.post('/auth/register', { email, password, full_name: fullName })
-      setStep('otp')
+      const { data } = await api.post('/auth/register', { email, password, full_name: fullName })
+      // Auto-login straight into the product — no email-verification wall.
+      localStorage.setItem('access_token', data.access_token)
+      localStorage.setItem('refresh_token', data.refresh_token)
+      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, full_name: data.full_name, plan: data.plan, is_admin: !!data.is_admin }))
+      navigate('/dashboard')
+      window.location.reload()
     } catch (err) {
       setError(err.response?.status === 429
         ? 'Too many attempts. Please wait a minute and try again.'
