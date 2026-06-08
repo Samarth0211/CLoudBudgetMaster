@@ -48,7 +48,7 @@ function AppLayout({ children }) {
       <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
       {navOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setNavOpen(false)} aria-hidden />}
       <Navbar onMenu={() => setNavOpen(true)} />
-      <main className="md:ml-60 pt-14 p-4 sm:p-6">
+      <main className="md:ml-60 px-4 sm:px-6 pt-20 pb-10">
         {children}
       </main>
       <ChatWidget />
