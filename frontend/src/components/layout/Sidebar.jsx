@@ -44,6 +44,9 @@ function NavSection({ title, items, onItemClick }) {
 export default function Sidebar({ open = false, onClose }) {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const plan = user?.plan || 'free'
+  const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
+  const isPaid = plan !== 'free'
 
   return (
     <aside className={`fixed left-0 top-0 z-50 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220] transition-transform duration-200 md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -65,12 +68,12 @@ export default function Sidebar({ open = false, onClose }) {
       <div className="border-t border-slate-800 p-3">
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-medium text-slate-400">Free plan</span>
-            <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-400">1/1</span>
+            <span className="text-[11px] font-medium text-slate-300">{planLabel} plan</span>
+            {isPaid && <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">Active</span>}
           </div>
           <button onClick={() => { navigate('/pricing'); onClose?.() }}
             className="w-full rounded-lg border border-slate-700 py-1.5 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white transition-colors">
-            View Plans
+            {isPaid ? 'Manage plan' : 'View Plans'}
           </button>
         </div>
       </div>

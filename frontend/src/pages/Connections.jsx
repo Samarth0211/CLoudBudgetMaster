@@ -306,8 +306,8 @@ function AddConnectionModal({ onClose, onAdded }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg rounded-2xl bg-[#232F3E] border border-white/10 shadow-2xl overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+      <div className="w-full max-w-lg my-auto rounded-2xl bg-[#232F3E] border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] animate-scale-in">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-white/5 px-6 py-4">
           <div className="flex items-center gap-3">
