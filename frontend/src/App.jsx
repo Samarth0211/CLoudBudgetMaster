@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth'
+import { ConnectionFilterProvider } from './hooks/useConnectionFilter'
 import Sidebar from './components/layout/Sidebar'
 import Navbar from './components/layout/Navbar'
 import LandingPage from './pages/LandingPage'
@@ -46,16 +47,18 @@ function PublicRoute({ children }) {
 function AppLayout({ children }) {
   const [navOpen, setNavOpen] = useState(false)
   return (
-    <div className="min-h-screen bg-[#0B1220]">
-      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
-      {navOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setNavOpen(false)} aria-hidden />}
-      <Navbar onMenu={() => setNavOpen(true)} />
-      <main className="md:ml-60 px-4 sm:px-6 pt-20 pb-10">
-        {children}
-      </main>
-      <ChatWidget />
-      <OnboardingTour />
-    </div>
+    <ConnectionFilterProvider>
+      <div className="min-h-screen bg-[#0B1220]">
+        <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
+        {navOpen && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setNavOpen(false)} aria-hidden />}
+        <Navbar onMenu={() => setNavOpen(true)} />
+        <main className="md:ml-60 px-4 sm:px-6 pt-20 pb-10">
+          {children}
+        </main>
+        <ChatWidget />
+        <OnboardingTour />
+      </div>
+    </ConnectionFilterProvider>
   )
 }
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
+import { useConnectionFilter } from '../hooks/useConnectionFilter'
 
 const WASTE_BADGES = {
   unused: { label: 'Unused', bg: 'bg-red-500/10', text: 'text-red-400', border: 'border-red-500/20', dot: 'bg-red-500' },
@@ -17,6 +18,7 @@ const TYPE_ICONS = {
 }
 
 export default function Resources() {
+  const { connectionId } = useConnectionFilter()
   const [resources, setResources] = useState([])
   const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
@@ -33,7 +35,8 @@ export default function Resources() {
 
   useEffect(() => {
     fetchResources()
-  }, [page, wasteFilter, typeFilter])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, wasteFilter, typeFilter, connectionId])
 
   const fetchResources = async () => {
     setLoading(true)
@@ -42,6 +45,7 @@ export default function Resources() {
       if (wasteFilter) params.set('waste_status', wasteFilter)
       if (typeFilter) params.set('resource_type', typeFilter)
       if (search) params.set('search', search)
+      if (connectionId) params.set('connection_id', connectionId)
       params.set('page', page)
       params.set('page_size', 25)
       const { data } = await api.get(`/resources?${params}`)

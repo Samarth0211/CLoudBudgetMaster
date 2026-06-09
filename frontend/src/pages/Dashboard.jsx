@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useTheme } from '../hooks/useTheme'
+import { useConnectionFilter } from '../hooks/useConnectionFilter'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   BarChart, Bar, Cell, LabelList
@@ -53,6 +54,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { theme } = useTheme()
+  const { connectionId } = useConnectionFilter()
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
   const [topWaste, setTopWaste] = useState([])
@@ -91,17 +93,21 @@ export default function Dashboard() {
 
   useEffect(() => {
     (async () => {
+      setLoading(true)
+      const cid = connectionId ? `&connection_id=${connectionId}` : ''
       try {
         const [s, t, w, c] = await Promise.all([
-          api.get('/dashboard/summary'), api.get('/dashboard/trend?days=30'),
-          api.get('/dashboard/top-waste?limit=5'), api.get('/connections'),
+          api.get(`/dashboard/summary${connectionId ? `?connection_id=${connectionId}` : ''}`),
+          api.get(`/dashboard/trend?days=30${cid}`),
+          api.get(`/dashboard/top-waste?limit=5${cid}`), api.get('/connections'),
         ])
         setSummary(s.data); setTrend(t.data.data_points || [])
         setTopWaste(w.data.resources || []); setConnections(c.data.connections || [])
       } catch (e) { console.error('Dashboard:', e) }
       finally { setLoading(false) }
     })()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionId])
 
   const handleChartClick = async (data) => {
     if (!data?.activePayload?.[0]) return

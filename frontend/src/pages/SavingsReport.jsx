@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import api from '../lib/api'
 import { useTheme } from '../hooks/useTheme'
+import { useConnectionFilter } from '../hooks/useConnectionFilter'
 import { generateCostReport } from '../lib/pdfReport'
 
 const TYPE_LABEL = {
@@ -32,10 +33,11 @@ function modelLabel(m) {
   return id
 }
 
-async function fetchAllResources() {
+async function fetchAllResources(connectionId = '') {
+  const cid = connectionId ? `&connection_id=${connectionId}` : ''
   let page = 1, all = [], totalPages = 1
   do {
-    const { data } = await api.get(`/resources?page=${page}&page_size=100`)
+    const { data } = await api.get(`/resources?page=${page}&page_size=100${cid}`)
     all = all.concat(data.resources || [])
     totalPages = data.total_pages || 1
     page++
@@ -73,6 +75,7 @@ function buildAiContext({ sum, svc, fc, conns, res, acct, tr }) {
 
 export default function SavingsReport() {
   const { theme } = useTheme()
+  const { connectionId } = useConnectionFilter()
   const [summary, setSummary] = useState(null)
   const [trend, setTrend] = useState([])
   const [connections, setConnections] = useState([])
@@ -88,16 +91,21 @@ export default function SavingsReport() {
 
   useEffect(() => {
     (async () => {
+      setLoading(true)
+      const cidQ = connectionId ? `?connection_id=${connectionId}` : ''
+      const cid = connectionId ? `&connection_id=${connectionId}` : ''
       const [sum, tr, svc, fc, tg, conns, res] = await Promise.all([
-        api.get('/dashboard/summary').then(r => r.data).catch(() => null),
-        api.get('/dashboard/trend?days=30').then(r => r.data.data_points || []).catch(() => []),
-        api.get('/dashboard/cost-by-service?days=30').then(r => r.data.services || []).catch(() => []),
-        api.get('/dashboard/forecast').then(r => r.data).catch(() => null),
-        api.get('/dashboard/cost-by-tag').then(r => r.data).catch(() => null),
+        api.get(`/dashboard/summary${cidQ}`).then(r => r.data).catch(() => null),
+        api.get(`/dashboard/trend?days=30${cid}`).then(r => r.data.data_points || []).catch(() => []),
+        api.get(`/dashboard/cost-by-service?days=30${cid}`).then(r => r.data.services || []).catch(() => []),
+        api.get(`/dashboard/forecast${cidQ}`).then(r => r.data).catch(() => null),
+        api.get(`/dashboard/cost-by-tag${cidQ}`).then(r => r.data).catch(() => null),
         api.get('/connections').then(r => r.data.connections || []).catch(() => []),
-        fetchAllResources().catch(() => []),
+        fetchAllResources(connectionId).catch(() => []),
       ])
-      const acct = conns.length === 1 ? conns[0].display_name : conns.length ? `${conns.length} cloud accounts` : 'All accounts'
+      const selected = conns.find(c => c.id === connectionId)
+      const acct = selected ? (selected.display_name || selected.provider)
+        : conns.length === 1 ? conns[0].display_name : conns.length ? `${conns.length} cloud accounts` : 'All accounts'
       setSummary(sum); setTrend(tr); setServices(svc); setForecast(fc); setTags(tg)
       setConnections(conns); setResources(res); setAccount(acct)
       setLoading(false)
@@ -108,7 +116,8 @@ export default function SavingsReport() {
         .catch(() => setInsights(null))
         .finally(() => setAiLoading(false))
     })()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionId])
 
   const handleDownload = async () => {
     setDownloading(true)

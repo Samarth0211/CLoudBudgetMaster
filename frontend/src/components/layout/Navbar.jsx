@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import { useAuth } from '../../hooks/useAuth'
 import ThemeToggle from '../shared/ThemeToggle'
+import ConnectionSelector from './ConnectionSelector'
 import api from '../../lib/api'
 
 const PAGE_TITLES = {
@@ -69,6 +70,7 @@ export default function Navbar({ onMenu }) {
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.7}><path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
         </button>
         <h2 className="text-sm font-medium text-slate-200">{pageTitle}</h2>
+        <span className="hidden sm:block"><ConnectionSelector /></span>
       </div>
 
       <div className="flex items-center gap-1.5">

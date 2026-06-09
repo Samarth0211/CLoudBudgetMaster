@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import api from '../lib/api'
+import { useConnectionFilter } from '../hooks/useConnectionFilter'
 
 export default function Compare() {
+  const { connectionId } = useConnectionFilter()
   const [searchParams] = useSearchParams()
   const [resources, setResources] = useState([])
   const [allResources, setAllResources] = useState([])
@@ -15,7 +17,8 @@ export default function Compare() {
       setSelectedIds(new Set(ids))
     }
     fetchAll()
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connectionId])
 
   useEffect(() => {
     if (selectedIds.size > 0 && allResources.length > 0) {
@@ -25,7 +28,7 @@ export default function Compare() {
 
   const fetchAll = async () => {
     try {
-      const { data } = await api.get('/resources?page_size=100')
+      const { data } = await api.get(`/resources?page_size=100${connectionId ? `&connection_id=${connectionId}` : ''}`)
       setAllResources(data.resources || [])
     } catch (err) {
       console.error('Failed to fetch resources:', err)
