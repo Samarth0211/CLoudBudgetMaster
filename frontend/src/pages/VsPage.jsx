@@ -32,7 +32,7 @@ const ROWS = [
   ['Setup', 'Read-only keys, ~5 minutes', 'Varies'],
   ['Access model', 'Read-only — never changes your infra', 'Varies'],
   ['Per-resource cost', 'Exact, from the AWS Pricing API', 'Varies'],
-  ['Clouds', 'AWS & GCP (Azure coming)', 'Often broader'],
+  ['Clouds', 'AWS today (GCP & Azure coming)', 'Often broader'],
 ]
 
 export default function VsPage() {
@@ -65,7 +65,7 @@ export default function VsPage() {
         <div className="mt-7 grid sm:grid-cols-2 gap-4">
           <div className="rounded-xl border border-[#FF9900]/30 bg-[#FF9900]/[0.06] p-5">
             <h2 className="font-bold text-[var(--fg)]">CloudBudgetMaster</h2>
-            <p className="mt-2 text-sm text-[var(--fg-2)]">Read-only waste finder for AWS &amp; GCP. Find idle/unused resources with exact $/month, a client-ready report, and spike alerts — free, in ~5 minutes. Built for indie founders &amp; small teams.</p>
+            <p className="mt-2 text-sm text-[var(--fg-2)]">Read-only waste finder for AWS (GCP &amp; Azure coming). Find idle/unused resources with exact $/month, a client-ready report, and spike alerts — free, in ~5 minutes. Built for indie founders &amp; small teams.</p>
           </div>
           <div className="rounded-xl border border-[var(--border)] bg-[var(--ink)] p-5">
             <h2 className="font-bold text-[var(--fg)]">{c.name}</h2>

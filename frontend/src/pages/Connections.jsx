@@ -8,7 +8,7 @@ const PLAN_MAX_CONNECTIONS = { free: 1, pro: 5, enterprise: 999 }
 
 const PROVIDERS = [
   { id: 'aws', name: 'Amazon Web Services', shortName: 'AWS', color: 'from-orange-500 to-amber-500', icon: AwsIcon },
-  { id: 'gcp', name: 'Google Cloud Platform', shortName: 'GCP', color: 'from-blue-500 to-cyan-500', icon: GcpIcon },
+  { id: 'gcp', name: 'Google Cloud Platform', shortName: 'GCP', color: 'from-blue-500 to-cyan-500', icon: GcpIcon, comingSoon: true },
   { id: 'azure', name: 'Microsoft Azure', shortName: 'Azure', color: 'from-sky-500 to-blue-600', icon: AzureIcon, comingSoon: true },
   { id: 'snowflake', name: 'Snowflake', shortName: 'Snowflake', color: 'from-cyan-400 to-blue-500', icon: SnowflakeIcon, comingSoon: true },
 ]

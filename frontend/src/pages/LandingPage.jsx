@@ -244,7 +244,7 @@ function Hero({ onCta }) {
             <span className="ping-dot absolute inline-flex h-full w-full rounded-full bg-[var(--orange)]" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-[var(--orange)]" />
           </span>
-          Live for AWS &amp; GCP · Azure &amp; Snowflake coming soon
+          Live for AWS · GCP, Azure &amp; Snowflake coming soon
         </div>
         <h1 className="reveal mx-auto mt-7 max-w-4xl text-[40px] font-extrabold leading-[1.04] tracking-[-0.025em] text-white sm:text-[58px] lg:text-[72px]">
           Stop burning money on<br className="hidden sm:block" />
@@ -716,7 +716,7 @@ export default function LandingPage() {
         '@context': 'https://schema.org', '@type': 'SoftwareApplication',
         name: 'CloudBudgetMaster', applicationCategory: 'BusinessApplication',
         operatingSystem: 'Web', url: 'https://cloudbudgetmaster.com',
-        description: 'Multi-cloud cost monitoring. Connect AWS & GCP read-only and find idle, unused, and overspending resources with exact monthly savings.',
+        description: 'Cloud cost monitoring. Connect AWS read-only and find idle, unused, and overspending resources with exact monthly savings. GCP & Azure coming soon.',
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD', description: 'Free forever plan, no credit card' },
         publisher: { '@type': 'Organization', name: 'CloudBudgetMaster', url: 'https://cloudbudgetmaster.com', logo: 'https://cloudbudgetmaster.com/logo.png' },
       }} />

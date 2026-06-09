@@ -87,7 +87,7 @@ export default function AwsWasteFinder() {
 
         <div className="mt-10 rounded-2xl border border-[var(--border)] bg-[var(--ink)] p-7 text-center">
           <h2 className="text-xl font-bold text-[var(--fg)]">Want this automatically — with the exact $/month?</h2>
-          <p className="mt-2 text-[var(--fg-3)]">CloudBudgetMaster connects read-only to AWS &amp; GCP and tracks waste across <em>all</em> regions, with real prices and monthly trends.</p>
+          <p className="mt-2 text-[var(--fg-3)]">CloudBudgetMaster connects read-only to AWS and tracks waste across <em>all</em> regions, with real prices and monthly trends. GCP &amp; Azure coming soon.</p>
           <Link to="/register" className="mt-5 inline-flex rounded-xl bg-[#FF9900] px-6 py-3 font-semibold text-[#1a1205]">Try it free — no card</Link>
         </div>
 
