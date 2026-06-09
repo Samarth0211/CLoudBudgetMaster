@@ -275,15 +275,19 @@ async def day_breakdown(
 
 @router.get("/forecast")
 async def cost_forecast(
+    connection_id: Optional[str] = Query(None),
+    provider: Optional[str] = Query(None),
     user=Depends(get_current_user),
 ):
     """Simple linear regression forecast based on last 30 days of cost data."""
     db = get_db()
 
-    conns = db.table("cloud_connections") \
-        .select("id") \
-        .eq("user_id", user["id"]) \
-        .execute()
+    conn_query = db.table("cloud_connections").select("id").eq("user_id", user["id"])
+    if connection_id:
+        conn_query = conn_query.eq("id", connection_id)
+    if provider:
+        conn_query = conn_query.eq("provider", provider)
+    conns = conn_query.execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
     if not conn_ids:
@@ -352,15 +356,19 @@ async def cost_forecast(
 @router.get("/cost-by-tag")
 async def cost_by_tag(
     tag_key: str = Query("Environment"),
+    connection_id: Optional[str] = Query(None),
+    provider: Optional[str] = Query(None),
     user=Depends(get_current_user),
 ):
     """Group resources by a tag key and sum costs."""
     db = get_db()
 
-    conns = db.table("cloud_connections") \
-        .select("id") \
-        .eq("user_id", user["id"]) \
-        .execute()
+    conn_query = db.table("cloud_connections").select("id").eq("user_id", user["id"])
+    if connection_id:
+        conn_query = conn_query.eq("id", connection_id)
+    if provider:
+        conn_query = conn_query.eq("provider", provider)
+    conns = conn_query.execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
 
     if not conn_ids:
@@ -402,11 +410,18 @@ async def cost_by_tag(
 @router.get("/cost-by-service")
 async def cost_by_service(
     days: int = Query(30, ge=1, le=90),
+    connection_id: Optional[str] = Query(None),
+    provider: Optional[str] = Query(None),
     user=Depends(get_current_user),
 ):
     """Aggregate per-service cost across the last `days` of cost snapshots."""
     db = get_db()
-    conns = db.table("cloud_connections").select("id").eq("user_id", user["id"]).execute()
+    conn_query = db.table("cloud_connections").select("id").eq("user_id", user["id"])
+    if connection_id:
+        conn_query = conn_query.eq("id", connection_id)
+    if provider:
+        conn_query = conn_query.eq("provider", provider)
+    conns = conn_query.execute()
     conn_ids = [c["id"] for c in (conns.data or [])]
     if not conn_ids:
         return {"services": [], "total": 0, "days": 0}
