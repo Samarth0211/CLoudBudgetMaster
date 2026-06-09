@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import api from '../lib/api'
@@ -256,7 +257,7 @@ export default function Connections() {
   )
 }
 
-function AddConnectionModal({ onClose, onAdded }) {
+function AddConnectionModal({ onClose, onAdded }) {  // rendered via portal to escape page transform-containing-block
   const [step, setStep] = useState(1)
   const [provider, setProvider] = useState(null)
   const [displayName, setDisplayName] = useState('')
@@ -305,7 +306,7 @@ function AddConnectionModal({ onClose, onAdded }) {
     }
   }
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
       <div className="w-full max-w-lg my-auto rounded-2xl bg-[#232F3E] border border-white/10 shadow-2xl overflow-y-auto max-h-[90vh] animate-scale-in">
         {/* Header */}
@@ -407,7 +408,8 @@ function AddConnectionModal({ onClose, onAdded }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
