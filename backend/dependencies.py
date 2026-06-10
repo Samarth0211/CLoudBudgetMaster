@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from fastapi import HTTPException, Request, Depends
 from backend.db.client import get_db
 from backend.core.security import decode_token
@@ -20,7 +21,21 @@ async def get_current_user(request: Request):
     if not profile.data:
         raise HTTPException(status_code=404, detail="User profile not found")
 
-    return profile.data
+    data = profile.data
+
+    # Lazily expire promo/paid trials: once plan_expires_at passes, drop to free.
+    # Enforced on every authenticated request, so no cron is required to be correct.
+    exp = data.get("plan_expires_at")
+    if exp and data.get("plan") != "free":
+        expd = exp if hasattr(exp, "tzinfo") else datetime.fromisoformat(str(exp))
+        if expd.tzinfo is None:
+            expd = expd.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expd:
+            db.table("profiles").update({"plan": "free", "plan_expires_at": None}).eq("id", user_id).execute()
+            data["plan"] = "free"
+            data["plan_expires_at"] = None
+
+    return data
 
 
 async def require_admin(user=Depends(get_current_user)):

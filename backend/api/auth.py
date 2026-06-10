@@ -45,6 +45,8 @@ def _is_admin(email: str) -> bool:
 
 def _auth_response(profile: dict) -> AuthResponse:
     token, exp = issue_token(profile["id"])
+    pe = profile.get("plan_expires_at")
+    pe = pe.isoformat() if hasattr(pe, "isoformat") else (str(pe) if pe else None)
     return AuthResponse(
         id=profile["id"],
         email=profile["email"],
@@ -54,6 +56,7 @@ def _auth_response(profile: dict) -> AuthResponse:
         refresh_token=token,
         expires_at=exp,
         is_admin=_is_admin(profile["email"]),
+        plan_expires_at=pe,
     )
 
 
@@ -88,7 +91,37 @@ async def register(request: Request, body: RegisterRequest):
     # email-verification code was the biggest signup drop-off; verification stays
     # available (for email deliverability) but is no longer a wall.
     profile = db.table("profiles").select("*").eq("email", email).single().execute()
-    return _auth_response(profile.data)
+    data = profile.data
+
+    # Apply a promo code if one was entered (e.g. the AWS campaign 7-day Pro trial).
+    # Invalid/used codes never block signup — the user just lands on free.
+    if body.promo_code:
+        from backend.core.promo import redeem_promo
+        plan, expires = redeem_promo(db, body.promo_code, email, data["id"])
+        if plan:
+            db.table("profiles").update({
+                "plan": plan,
+                "plan_expires_at": expires,
+                "promo_code": body.promo_code.strip().upper(),
+            }).eq("id", data["id"]).execute()
+            data["plan"] = plan
+            data["plan_expires_at"] = expires
+
+    return _auth_response(data)
+
+
+class CheckPromoRequest(BaseModel):
+    code: str
+    email: str = ""
+
+
+@router.post("/check-promo")
+@limiter.limit("20/minute")
+async def check_promo(request: Request, body: CheckPromoRequest):
+    """Live validation for the signup form — does this code apply for this email?"""
+    from backend.core.promo import validate_promo
+    ok, info = validate_promo(get_db(), body.code, body.email)
+    return {"valid": ok, **info}
 
 
 class VerifyOTPRequest(BaseModel):

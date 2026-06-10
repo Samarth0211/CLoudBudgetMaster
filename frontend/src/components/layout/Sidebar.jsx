@@ -47,6 +47,12 @@ export default function Sidebar({ open = false, onClose }) {
   const plan = user?.plan || 'free'
   const planLabel = plan.charAt(0).toUpperCase() + plan.slice(1)
   const isPaid = plan !== 'free'
+  // Days left on a promo/paid trial, if one is active.
+  const trialDaysLeft = (() => {
+    if (!user?.plan_expires_at) return null
+    const ms = new Date(user.plan_expires_at).getTime() - Date.now()
+    return ms > 0 ? Math.ceil(ms / 86400000) : 0
+  })()
 
   return (
     <aside className={`fixed left-0 top-0 z-50 flex h-screen w-60 flex-col border-r border-slate-800 bg-[#0B1220] transition-transform duration-200 md:translate-x-0 ${open ? 'translate-x-0' : '-translate-x-full'}`}>
@@ -69,11 +75,18 @@ export default function Sidebar({ open = false, onClose }) {
         <div className="rounded-lg border border-slate-800 bg-slate-900/50 px-3 py-2.5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-medium text-slate-300">{planLabel} plan</span>
-            {isPaid && <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">Active</span>}
+            {isPaid && (
+              trialDaysLeft !== null
+                ? <span className="rounded bg-[#FF9900]/15 px-1.5 py-0.5 text-[10px] font-medium text-[#FFB84D]">Trial</span>
+                : <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-medium text-emerald-400">Active</span>
+            )}
           </div>
+          {trialDaysLeft !== null && (
+            <p className="mb-2 text-[10px] text-slate-400">{trialDaysLeft > 0 ? `${trialDaysLeft} day${trialDaysLeft === 1 ? '' : 's'} left, then Free` : 'Trial ended'}</p>
+          )}
           <button onClick={() => { navigate('/pricing'); onClose?.() }}
             className="w-full rounded-lg border border-slate-700 py-1.5 text-[11px] font-medium text-slate-300 hover:border-slate-600 hover:text-white transition-colors">
-            {isPaid ? 'Manage plan' : 'View Plans'}
+            {isPaid ? (trialDaysLeft !== null ? 'Upgrade to keep Pro' : 'Manage plan') : 'View Plans'}
           </button>
         </div>
       </div>

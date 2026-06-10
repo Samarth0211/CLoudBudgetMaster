@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import BrandLogo from '../components/shared/BrandLogo'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
@@ -22,10 +22,25 @@ export default function Register() {
   const [loading, setLoading] = useState(false)
   const [step, setStep] = useState('form') // 'form' | 'otp'
   const [otpCode, setOtpCode] = useState('')
+  const [promoCode, setPromoCode] = useState('')
+  const [promo, setPromo] = useState(null) // { valid, message } | null
   const { login } = useAuth()
   const navigate = useNavigate()
 
   const passwordError = password.length > 0 ? validatePassword(password) : null
+
+  // Live-check the promo code once both a code and a plausible email are present.
+  useEffect(() => {
+    const code = promoCode.trim()
+    if (!code || !email.includes('@')) { setPromo(null); return }
+    const t = setTimeout(async () => {
+      try {
+        const { data } = await api.post('/auth/check-promo', { code, email })
+        setPromo({ valid: !!data.valid, message: data.message })
+      } catch { setPromo(null) }
+    }, 450)
+    return () => clearTimeout(t)
+  }, [promoCode, email])
 
   const handleRegister = async (e) => {
     e.preventDefault()
@@ -36,11 +51,13 @@ export default function Register() {
 
     setLoading(true)
     try {
-      const { data } = await api.post('/auth/register', { email, password, full_name: fullName })
+      const payload = { email, password, full_name: fullName }
+      if (promoCode.trim()) payload.promo_code = promoCode.trim()
+      const { data } = await api.post('/auth/register', payload)
       // Auto-login straight into the product — no email-verification wall.
       localStorage.setItem('access_token', data.access_token)
       localStorage.setItem('refresh_token', data.refresh_token)
-      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, full_name: data.full_name, plan: data.plan, is_admin: !!data.is_admin }))
+      localStorage.setItem('user', JSON.stringify({ id: data.id, email: data.email, full_name: data.full_name, plan: data.plan, plan_expires_at: data.plan_expires_at || null, is_admin: !!data.is_admin }))
       navigate('/dashboard')
       window.location.reload()
     } catch (err) {
@@ -171,6 +188,18 @@ export default function Register() {
                     className="block w-full rounded-lg border border-slate-700 bg-slate-900/80 backdrop-blur-sm px-3.5 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-colors" />
                   {passwordError && <p className="mt-1.5 text-xs text-amber-400">{passwordError}</p>}
                   {password.length >= 8 && !passwordError && <p className="mt-1.5 text-xs text-emerald-400">Strong password</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-1.5">Promo code <span className="text-slate-500 font-normal">(optional)</span></label>
+                  <input type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                    placeholder="Have a code? Enter it here"
+                    className="block w-full rounded-lg border border-slate-700 bg-slate-900/80 backdrop-blur-sm px-3.5 py-2.5 text-sm font-mono tracking-wide text-white placeholder:text-slate-500 placeholder:font-sans placeholder:tracking-normal focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition-colors" />
+                  {promo && (
+                    <p className={`mt-1.5 text-xs ${promo.valid ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {promo.valid ? '✓ ' : ''}{promo.message}
+                    </p>
+                  )}
                 </div>
 
                 <button type="submit" disabled={loading || !!passwordError}

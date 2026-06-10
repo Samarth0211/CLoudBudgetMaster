@@ -130,3 +130,32 @@ CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts (status, publishe
 
 -- Email preference for the daily blog digest (opt-out).
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS blog_opt_out BOOLEAN DEFAULT FALSE;
+
+-- Promo-code trials (e.g. the AWS cold-email campaign). A code grants a temporary
+-- paid plan; plan_expires_at drives the auto-downgrade back to free.
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_expires_at TIMESTAMPTZ;
+
+CREATE TABLE IF NOT EXISTS promo_codes (
+  code TEXT PRIMARY KEY,                 -- stored upper-case
+  plan TEXT NOT NULL DEFAULT 'pro',
+  trial_days INT NOT NULL DEFAULT 7,
+  max_per_domain INT NOT NULL DEFAULT 1, -- redemptions allowed per email domain
+  valid_until TIMESTAMPTZ,               -- offer end; NULL = no end
+  active BOOLEAN DEFAULT TRUE,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- One row per redemption; UNIQUE(code, email_domain) enforces the per-domain cap.
+CREATE TABLE IF NOT EXISTS promo_redemptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code TEXT NOT NULL,
+  email_domain TEXT NOT NULL,
+  profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  redeemed_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (code, email_domain)
+);
+
+-- Campaign code: 7-day Pro trial, one per company domain, offer ends 20 Jun 2026 IST.
+INSERT INTO promo_codes (code, plan, trial_days, max_per_domain, valid_until, active)
+VALUES ('CBMPRO7', 'pro', 7, 1, '2026-06-20 23:59:59+05:30', TRUE)
+ON CONFLICT (code) DO UPDATE SET valid_until = EXCLUDED.valid_until, active = TRUE;

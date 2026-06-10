@@ -5,6 +5,7 @@ class RegisterRequest(BaseModel):
     email: EmailStr
     password: str
     full_name: str
+    promo_code: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -21,6 +22,7 @@ class AuthResponse(BaseModel):
     refresh_token: str
     expires_at: int
     is_admin: bool = False
+    plan_expires_at: str | None = None  # set while a promo/paid trial is active
 
 
 class ProfileResponse(BaseModel):
