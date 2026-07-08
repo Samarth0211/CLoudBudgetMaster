@@ -10,7 +10,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from backend.config import get_settings
-from backend.api import auth, connections, dashboard, resources, alerts, assistant, payments, contact, blog
+from backend.api import auth, connections, dashboard, resources, alerts, assistant, payments, contact, blog, admin
 from backend.core.rate_limit import limiter
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -53,6 +53,7 @@ app.include_router(assistant.router, prefix="/v1")
 app.include_router(payments.router, prefix="/v1")
 app.include_router(contact.router, prefix="/v1")
 app.include_router(blog.router, prefix="/v1")
+app.include_router(admin.router, prefix="/v1")
 
 
 @app.exception_handler(Exception)

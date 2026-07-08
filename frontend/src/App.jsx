@@ -18,6 +18,7 @@ import Settings from './pages/Settings'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 import BlogAdmin from './pages/BlogAdmin'
+import AdminUsers from './pages/AdminUsers'
 import Security from './pages/Security'
 import About from './pages/About'
 import Contact from './pages/Contact'
@@ -111,6 +112,11 @@ export default function App() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <AppLayout><Settings /></AppLayout>
+        </ProtectedRoute>
+      } />
+      <Route path="/admin/users" element={
+        <ProtectedRoute>
+          <AppLayout><AdminUsers /></AppLayout>
         </ProtectedRoute>
       } />
       <Route path="/admin/blog" element={

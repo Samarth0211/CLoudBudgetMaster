@@ -3,6 +3,7 @@ import BrandLogo from '../shared/BrandLogo'
 import { useAuth } from '../../hooks/useAuth'
 
 const ADMIN_ITEMS = [
+  { path: '/admin/users', label: 'Users', icon: 'M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-2.13a4 4 0 10-4-4 4 4 0 004 4zm6 0a4 4 0 10-3.999-4.2A4 4 0 0017 11.87' },
   { path: '/admin/blog', label: 'Blog', icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m-6 8h2m-2-4h2m4-3h2a2 2 0 012 2v7a2 2 0 01-2 2h-2v-9z' },
 ]
 
