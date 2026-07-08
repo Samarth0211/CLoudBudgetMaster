@@ -251,7 +251,7 @@ function Hero({ onCta }) {
           <span className="text-[var(--fg)]" style={{ textDecoration: 'underline', textDecorationColor: 'var(--orange)', textDecorationThickness: '6px', textUnderlineOffset: '8px' }}> idle cloud resources</span>
         </h1>
         <p className="reveal mx-auto mt-6 max-w-2xl text-[17px] leading-relaxed text-[var(--fg-3)] sm:text-[20px]">
-          CloudBudgetMaster scans your multi-cloud infrastructure with read-only access, surfaces every wasted dollar, and alerts you before costs spiral. Setup takes under 5 minutes.
+          CloudBudgetMaster connects to your AWS account read-only, finds the idle and forgotten resources quietly draining your bill, and alerts you before costs spiral. GCP, Azure and Snowflake are coming soon. Setup takes under 5 minutes.
         </p>
         <div className="reveal mt-9 flex flex-col items-center justify-center gap-3.5 sm:flex-row">
           <button onClick={onCta} className="btn btn-primary px-7 py-3.5 text-[15px]">
@@ -261,7 +261,7 @@ function Hero({ onCta }) {
             <Icon d={PATHS.search} className="h-4 w-4" sw={2} /> Calculate my savings
           </a>
         </div>
-        <p className="reveal mt-5 text-[13px] text-[var(--fg-4)]">Free forever plan · No credit card required · Read-only access</p>
+        <p className="reveal mt-5 text-[13px] text-[var(--fg-4)]">Free forever · No credit card · Read-only, never write access · AES-256 encrypted · Revoke anytime</p>
         <div className="reveal relative mx-auto mt-16 max-w-5xl">
           <DashboardMock />
           <div className="pointer-events-none absolute -bottom-10 left-1/2 h-20 w-3/4 -translate-x-1/2 rounded-full bg-[rgba(255,153,0,0.22)] blur-[60px]" />
@@ -277,7 +277,7 @@ function TrustStrip() {
     { icon: PATHS.eye, t: 'Read-only access', s: 'We never modify your infrastructure' },
     { icon: PATHS.lock, t: 'AES-256 encrypted', s: 'Credentials encrypted at rest' },
     { icon: PATHS.shield, t: 'No write permissions', s: 'Scoped to read-only, always' },
-    { icon: PATHS.cloud, t: 'AWS · GCP · Azure · Snowflake', s: 'One dashboard, every cloud' },
+    { icon: PATHS.cloud, t: 'AWS today', s: 'GCP, Azure & Snowflake coming soon' },
   ]
   return (
     <section className="border-y border-[var(--border-soft)] bg-[var(--canvas-2)] py-10">
@@ -331,7 +331,7 @@ function Stats() {
 
 /* ---- Features ---- */
 const FEATURES = [
-  { title: 'Multi-cloud, one pane', desc: 'Connect AWS, GCP, Azure, and Snowflake into a single unified dashboard. No more tab-juggling across four consoles.', icon: PATHS.cloud, tint: 'var(--orange)' },
+  { title: 'Built for multi-cloud', desc: 'Connect your AWS accounts into one unified dashboard today. GCP, Azure and Snowflake are coming soon, so one pane covers your whole estate.', icon: PATHS.cloud, tint: 'var(--orange)' },
   { title: 'Waste detection', desc: 'Automatically surface stopped EC2 instances, unattached EBS volumes, idle RDS databases, and orphaned Elastic IPs — each with a dollar figure.', icon: PATHS.search, tint: 'var(--waste)' },
   { title: 'Cost-spike alerts', desc: 'Get pinged by email and in-app the moment spend deviates from normal. Catch surprises before they reach the invoice.', icon: PATHS.bell, tint: 'var(--warning)' },
   { title: 'AI cost assistant', desc: 'Ask in plain English — "Why did my bill jump?" — and get an instant, context-aware answer grounded in your real usage.', icon: PATHS.chat, tint: 'var(--info)' },
@@ -350,7 +350,7 @@ function Features() {
             Everything you need to <span className="grad-orange-text">cut cloud waste</span>
           </h2>
           <p className="mt-4 text-[17px] leading-relaxed text-[var(--fg-3)]">
-            One platform to monitor, detect, and fix overprovisioned and abandoned resources across every provider you run.
+            One platform to monitor, detect, and fix overprovisioned and abandoned resources across your AWS accounts, with GCP, Azure and Snowflake coming soon.
           </p>
         </div>
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
@@ -375,7 +375,7 @@ function Features() {
 
 /* ---- How it works ---- */
 const STEPS = [
-  { n: '01', title: 'Connect your cloud', desc: 'Paste read-only IAM credentials for AWS, GCP, Azure, or Snowflake. Keys are AES-256 encrypted — we never touch your infrastructure.', icon: PATHS.link },
+  { n: '01', title: 'Connect your AWS account', desc: 'Paste read-only IAM credentials. Keys are AES-256 encrypted and we never touch your infrastructure. GCP, Azure and Snowflake are coming soon.', icon: PATHS.link },
   { n: '02', title: 'See waste instantly', desc: 'CloudBudgetMaster scans every account and surfaces idle, unused, and oversized resources — each tagged with the exact dollars it costs you.', icon: PATHS.search },
   { n: '03', title: 'Save & stay alert', desc: 'Get step-by-step fix recommendations, export savings reports, and receive alerts the moment costs spike again.', icon: PATHS.shield },
 ]
@@ -409,11 +409,30 @@ function HowItWorks() {
   )
 }
 
+/* ---- Credibility ---- */
+function Credibility() {
+  const ref = useReveal()
+  return (
+    <section ref={ref} className="py-24 lg:py-28">
+      <div className="mx-auto max-w-7xl px-6 lg:px-8">
+        <div className="reveal mx-auto max-w-2xl rounded-2xl border border-[var(--border)] bg-[var(--ink)] p-8 text-center sm:p-10">
+          <h2 className="text-[26px] font-bold tracking-[-0.02em] text-[var(--fg)] sm:text-[32px]">
+            An independent team, accountable to you.
+          </h2>
+          <p className="mt-4 text-[15px] leading-relaxed text-[var(--fg-3)] sm:text-[16px]">
+            CloudBudgetMaster is built and run by a small independent team, not a faceless platform. We connect to AWS read-only and never request write access, so we can see your bill but can never change your infrastructure. Your credentials are AES-256 encrypted, and you can revoke access at any time from your cloud console. Questions go to a real person: support@cloudbudgetmaster.com.
+          </p>
+        </div>
+      </div>
+    </section>
+  )
+}
+
 /* ---- Savings calculator (signature interactive) ---- */
 function SavingsCalc({ onCta }) {
   const ref = useReveal()
   const [spend, setSpend] = useState(4800)
-  const [clouds, setClouds] = useState({ AWS: true, GCP: true, Azure: false, Snowflake: false })
+  const [clouds, setClouds] = useState({ AWS: true, GCP: false, Azure: false, Snowflake: false })
   const [maturity, setMaturity] = useState(1)
 
   const active = Object.keys(clouds).filter(k => clouds[k])
@@ -462,7 +481,7 @@ function SavingsCalc({ onCta }) {
                 {Object.keys(clouds).map(k => (
                   <button key={k} onClick={() => toggle(k)}
                     className={`rounded-lg border px-3.5 py-2 text-[13px] font-medium transition-all ${clouds[k] ? 'border-[var(--orange-tint-2)] bg-[var(--orange-tint)] text-[var(--orange-bright)]' : 'border-[var(--border)] bg-white/[0.02] text-[var(--fg-4)] hover:text-[var(--fg-2)]'}`}>
-                    {k}
+                    {k === 'AWS' ? k : `${k} (soon)`}
                   </button>
                 ))}
               </div>
@@ -573,10 +592,10 @@ function AIPeek() {
 const TIERS = [
   { name: 'Free', price: '$0', period: 'forever', desc: 'For individual developers exploring cloud savings.', cta: 'Start free', hot: false,
     features: ['1 cloud connection', '3 alert rules', 'Daily automated scans', 'Waste detection (EC2, RDS, EBS, IPs)', 'AI cost assistant', 'Email alerts'] },
-  { name: 'Pro', price: '$29', period: '/month', desc: 'For teams managing multiple cloud accounts.', cta: 'Upgrade to Pro', hot: true,
-    features: ['5 cloud connections', '50 alert rules', 'Hourly scans', 'Multi-cloud (AWS + GCP + Azure)', 'AI assistant (unlimited)', 'PDF export & savings reports', 'Priority support'] },
-  { name: 'Enterprise', price: '$99', period: '/month', desc: 'For organizations with complex multi-cloud setups.', cta: 'Contact sales', hot: false,
-    features: ['Unlimited connections', 'Unlimited alert rules', 'Custom alert logic', 'Dedicated account manager', 'Webhook integrations', 'SSO / SAML', 'SLA guarantee'] },
+  { name: 'Pro', price: '$29', period: '/month', desc: 'For consultants and teams running several AWS accounts.', cta: 'Upgrade to Pro', hot: true,
+    features: ['5 cloud connections', '50 alert rules', 'Hourly scans', 'AWS today (GCP, Azure & Snowflake soon)', 'AI assistant (unlimited)', 'PDF export & savings reports', 'Priority support'] },
+  { name: 'Enterprise', price: '$99', period: '/month', desc: 'For teams running a large fleet of AWS accounts.', cta: 'Contact us', hot: false,
+    features: ['Unlimited connections', 'Unlimited alert rules', 'Hourly scans', 'AI assistant (unlimited)', 'PDF export & savings reports', 'Priority support', 'Early access to GCP, Azure & Snowflake'] },
 ]
 
 function Pricing({ onCta }) {
@@ -655,7 +674,7 @@ function FootLink({ to, children }) {
 function Footer() {
   const cols = [
     ['Product', [['Features', '#features'], ['How it works', '#how'], ['Pricing', '#pricing'], ['Savings calculator', '#calc']]],
-    ['Supported', [['Amazon Web Services'], ['Google Cloud'], ['Microsoft Azure'], ['Snowflake']]],
+    ['Clouds', [['Amazon Web Services'], ['Google Cloud (soon)'], ['Microsoft Azure (soon)'], ['Snowflake (soon)']]],
     ['Company', [['About', '/about'], ['Blog', '/blog'], ['Security', '/security'], ['Contact', '/contact']]],
   ]
   return (
@@ -665,7 +684,7 @@ function Footer() {
           <div>
             <Wordmark />
             <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-[var(--fg-3)]">
-              The FinOps command center that finds idle cloud spend across AWS, GCP, Azure &amp; Snowflake — before it hits your invoice.
+              The FinOps command center that finds idle AWS spend before it hits your invoice. GCP, Azure and Snowflake coming soon.
             </p>
             <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-[var(--border)] bg-white/[0.03] px-3 py-1.5 text-[12px] text-[var(--fg-3)]">
               <Icon d={PATHS.lock} className="h-3.5 w-3.5 text-[var(--positive)]" sw={1.8} />
@@ -727,6 +746,7 @@ export default function LandingPage() {
         <Stats />
         <Features />
         <HowItWorks />
+        <Credibility />
         <SavingsCalc onCta={start} />
         <AIPeek />
         <Pricing onCta={start} />

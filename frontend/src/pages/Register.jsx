@@ -131,7 +131,7 @@ export default function Register() {
             </div>
             <div className="flex items-center gap-1.5">
               <svg className="h-4 w-4 text-emerald-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
-              <span className="text-xs text-indigo-200">SOC 2 practices</span>
+              <span className="text-xs text-indigo-200">Revoke anytime</span>
             </div>
           </div>
         </div>
@@ -206,6 +206,7 @@ export default function Register() {
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                   {loading ? 'Creating account...' : 'Create free account'}
                 </button>
+                <p className="mt-3 text-center text-xs text-slate-500">Read-only, never write access · AES-256 encrypted · Revoke anytime</p>
               </form>
             </>
           ) : (
