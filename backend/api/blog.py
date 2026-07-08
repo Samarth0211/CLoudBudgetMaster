@@ -3,6 +3,8 @@
 Mutations re-render the static SEO HTML (see services/blog_render). Mounted at
 /v1/blog. Public pages are served as static files from the nginx dist.
 """
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -149,10 +151,14 @@ async def admin_generate(admin=Depends(require_admin)):
 async def admin_list(admin=Depends(require_admin)):
     db = get_db()
     rows = db.table("blog_posts") \
-        .select("id, slug, title, category, status, published_at, updated_at, excerpt, views") \
+        .select("id, slug, title, category, status, published_at, updated_at, excerpt, views, content") \
         .order("updated_at", desc=True).execute().data or []
+    for r in rows:
+        content = r.pop("content", "")
+        r["read_time"] = int(re.match(r"\d+", reading_time(content)).group())
     total_views = sum(r.get("views") or 0 for r in rows)
-    return {"posts": rows, "total_views": total_views}
+    avg_read_time = round(sum(r["read_time"] for r in rows) / len(rows), 1) if rows else 0
+    return {"posts": rows, "total_views": total_views, "avg_read_time": avg_read_time}
 
 
 @router.get("/admin/posts/{post_id}")
