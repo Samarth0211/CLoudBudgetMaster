@@ -159,3 +159,6 @@ CREATE TABLE IF NOT EXISTS promo_redemptions (
 INSERT INTO promo_codes (code, plan, trial_days, max_per_domain, valid_until, active)
 VALUES ('CBMPRO7', 'pro', 7, 1, '2026-06-20 23:59:59+05:30', TRUE)
 ON CONFLICT (code) DO UPDATE SET valid_until = EXCLUDED.valid_until, active = TRUE;
+
+-- Blog view tracking (public post-view counter, surfaced in the admin list).
+ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0;

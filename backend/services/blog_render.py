@@ -55,6 +55,44 @@ def _e(s) -> str:
     return html.escape(str(s or ""), quote=True)
 
 
+def _extract_faq(content: str) -> list:
+    """Best-effort parse of a '## Frequently asked questions' section into Q/A pairs.
+
+    Matches the format blog_writer.py's SYSTEM_PROMPT asks the model to produce:
+    an H2 'Frequently asked questions' section containing '###' question headings,
+    each followed by a plain-text answer (until the next heading of any level).
+    Returns [] if no such section is found — callers should skip FAQPage JSON-LD then.
+    """
+    if not content:
+        return []
+    lines = content.splitlines()
+    faq_start = None
+    for i, line in enumerate(lines):
+        if re.match(r"^##\s+frequently asked questions", line.strip(), re.IGNORECASE):
+            faq_start = i + 1
+            break
+    if faq_start is None:
+        return []
+    faq_end = len(lines)
+    for i in range(faq_start, len(lines)):
+        if re.match(r"^##\s+\S", lines[i]):  # next H2 ends the FAQ section
+            faq_end = i
+            break
+    pairs = []
+    question, answer_lines = None, []
+    for line in lines[faq_start:faq_end]:
+        m = re.match(r"^###\s+(.+)", line)
+        if m:
+            if question and answer_lines:
+                pairs.append((question, " ".join(answer_lines).strip()))
+            question, answer_lines = m.group(1).strip(), []
+        elif question is not None and line.strip():
+            answer_lines.append(line.strip())
+    if question and answer_lines:
+        pairs.append((question, " ".join(answer_lines).strip()))
+    return [(q, a) for q, a in pairs if q and a]
+
+
 # ── shared chrome ────────────────────────────────────────────────────────────
 def _head(*, title, description, canonical, image, keywords="", og_type="website",
           published=None, category="", jsonld=None) -> str:
@@ -66,9 +104,11 @@ def _head(*, title, description, canonical, image, keywords="", og_type="website
         extra += f'\n  <meta property="article:author" content="CloudBudgetMaster" />'
         if category:
             extra += f'\n  <meta property="article:section" content="{_e(category)}" />'
-    jsonld_tag = ""
-    if jsonld:
-        jsonld_tag = '\n  <script type="application/ld+json">' + json.dumps(jsonld, ensure_ascii=False) + "</script>"
+    jsonld_list = jsonld if isinstance(jsonld, list) else ([jsonld] if jsonld else [])
+    jsonld_tag = "".join(
+        '\n  <script type="application/ld+json">' + json.dumps(block, ensure_ascii=False) + "</script>"
+        for block in jsonld_list
+    )
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -176,10 +216,25 @@ def render_post_html(post: dict) -> str:
         "articleSection": post.get("category") or "FinOps",
         "keywords": post.get("keywords") or "",
     }
+    jsonld_blocks = [jsonld]
+    faq_pairs = _extract_faq(post.get("content") or "")
+    if faq_pairs:
+        jsonld_blocks.append({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": q,
+                    "acceptedAnswer": {"@type": "Answer", "text": a},
+                }
+                for q, a in faq_pairs
+            ],
+        })
     head = _head(title=title_tag, description=desc, canonical=canonical, image=image,
                  keywords=post.get("keywords", ""), og_type="article",
                  published=post.get("published_at") or post.get("created_at"),
-                 category=post.get("category", ""), jsonld=jsonld)
+                 category=post.get("category", ""), jsonld=jsonld_blocks)
     cover = f'<img class="cover" src="{_e(post["cover_image"])}" alt="{_e(post["title"])}" />' if post.get("cover_image") else ""
     return f"""{head}
 <body>

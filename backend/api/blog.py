@@ -3,7 +3,7 @@
 Mutations re-render the static SEO HTML (see services/blog_render). Mounted at
 /v1/blog. Public pages are served as static files from the nginx dist.
 """
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -13,6 +13,7 @@ from backend.db.client import get_db
 from backend.config import get_settings
 from backend.dependencies import require_admin
 from backend.core.security import verify_unsub_token
+from backend.core.rate_limit import limiter
 from backend.services.blog_render import regenerate, slugify, reading_time, CATEGORIES
 from backend.services.search_ping import notify
 
@@ -89,6 +90,27 @@ async def get_published(slug: str):
     return row
 
 
+@router.post("/posts/{slug}/view")
+@limiter.limit("30/minute")
+async def record_view(request: Request, slug: str):
+    """Public, no auth. Increments the view counter for a published post."""
+    try:
+        db = get_db()
+        row = db.table("blog_posts").select("id, views").eq("slug", slug) \
+            .eq("status", "published").single().execute().data
+        if not row:
+            raise HTTPException(status_code=404, detail="Post not found")
+        new_views = (row.get("views") or 0) + 1
+        updated = db.table("blog_posts").update({"views": new_views}).eq("id", row["id"]).execute().data
+        final = updated[0]["views"] if updated else new_views
+        return {"views": final}
+    except HTTPException:
+        raise
+    except Exception as e:  # noqa: BLE001 — view tracking must never break the page
+        print(f"[blog] view increment failed for slug={slug!r}: {e}")
+        return {"views": 0}
+
+
 @router.get("/categories")
 async def categories():
     return {"categories": CATEGORIES}
@@ -126,9 +148,11 @@ async def admin_generate(admin=Depends(require_admin)):
 @router.get("/admin/posts")
 async def admin_list(admin=Depends(require_admin)):
     db = get_db()
-    rows = db.table("blog_posts").select("id, slug, title, category, status, published_at, updated_at, excerpt") \
+    rows = db.table("blog_posts") \
+        .select("id, slug, title, category, status, published_at, updated_at, excerpt, views") \
         .order("updated_at", desc=True).execute().data or []
-    return {"posts": rows}
+    total_views = sum(r.get("views") or 0 for r in rows)
+    return {"posts": rows, "total_views": total_views}
 
 
 @router.get("/admin/posts/{post_id}")

@@ -39,12 +39,17 @@ export default function BlogAdmin() {
 
   if (editing) return <Editor post={editing} onDone={() => { setEditing(null); load() }} onCancel={() => setEditing(null)} />
 
+  const totalViews = posts.reduce((sum, p) => sum + (p.views || 0), 0)
+
   return (
     <div className="animate-fade-up pb-10">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Blog</h1>
           <p className="mt-1 text-sm text-slate-400">Write SEO-optimized posts. Publishing instantly generates a static page + updates the sitemap.</p>
+          {posts.length > 0 && (
+            <p className="mt-1 text-xs text-slate-500">Total views: <span className="text-slate-300 font-medium">{totalViews.toLocaleString()}</span></p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <GenerateButton onDone={load} />
@@ -66,6 +71,7 @@ export default function BlogAdmin() {
           <table className="w-full text-sm">
             <thead><tr className="bg-white/[0.03] text-left text-[11px] uppercase tracking-wide text-slate-500">
               <th className="px-4 py-3 font-medium">Title</th><th className="px-4 py-3 font-medium">Category</th>
+              <th className="px-4 py-3 font-medium">Views</th>
               <th className="px-4 py-3 font-medium">Status</th><th className="px-4 py-3 font-medium">Updated</th><th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr></thead>
             <tbody>
@@ -76,6 +82,7 @@ export default function BlogAdmin() {
                     <div className="text-xs text-slate-500 truncate">/blog/{p.slug}</div>
                   </td>
                   <td className="px-4 py-3 text-slate-300">{p.category}</td>
+                  <td className="px-4 py-3 text-slate-300">{(p.views || 0).toLocaleString()}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-medium ${p.status === 'published' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-slate-400'}`}>{p.status}</span>
                   </td>

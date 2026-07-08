@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import api from '../lib/api'
 import BrandLogo from '../components/shared/BrandLogo'
@@ -7,9 +7,17 @@ export default function BlogPost() {
   const { slug } = useParams()
   const [post, setPost] = useState(null)
   const [loading, setLoading] = useState(true)
+  const viewedSlugRef = useRef(null)
   useEffect(() => {
     setLoading(true)
-    api.get(`/blog/posts/${slug}`).then(r => setPost(r.data)).catch(() => setPost(null)).finally(() => setLoading(false))
+    api.get(`/blog/posts/${slug}`).then(r => {
+      setPost(r.data)
+      // Fire-and-forget view ping, once per slug (guards StrictMode double-invoke and re-renders).
+      if (viewedSlugRef.current !== slug) {
+        viewedSlugRef.current = slug
+        api.post(`/blog/posts/${slug}/view`).catch(() => {})
+      }
+    }).catch(() => setPost(null)).finally(() => setLoading(false))
   }, [slug])
 
   if (loading) {
