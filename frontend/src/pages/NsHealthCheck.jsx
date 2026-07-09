@@ -1,19 +1,71 @@
-import { Link } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import NsNav from '../components/ns/NsNav'
 import NsFooter from '../components/ns/NsFooter'
-import NotifyMeForm from '../components/ns/NotifyMeForm'
 import FreeCheckUploader from '../components/ns/FreeCheckUploader'
+import PaidCheckoutForm from '../components/ns/PaidCheckoutForm'
+import PaidReportUploader from '../components/ns/PaidReportUploader'
+import api from '../lib/api'
+
+const PRODUCT_META = {
+  'health-check': { name: 'AWS bill health check', price: '$49' },
+  'ai-audit': { name: 'AI / GPU cost audit', price: '$79' },
+  networking: { name: 'Networking cost teardown', price: '$39' },
+  msp: { name: 'MSP white-label report', price: '$149' },
+}
 
 const BUY_STEPS = [
-  { num: '01', title: 'Join the list', desc: 'Leave your email and we will notify you the moment paid checkout opens. No password, no account created.', icon: 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z' },
-  { num: '02', title: 'Or run the free check now', desc: 'Prefer not to wait? Upload your CSV below and get real findings today, at no cost.', icon: 'M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3' },
-  { num: '03', title: 'Full report when it ships', desc: 'The $49 report adds deeper detail on top of the free check. Findings with dollar amounts and resource IDs, no account required.', icon: 'M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75' },
+  { num: '01', title: 'Pay with PayPal', desc: 'Enter your email and continue to PayPal. Secure checkout, no password, no account created.', icon: 'M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z' },
+  { num: '02', title: 'Upload your CSV', desc: 'Back here right after payment, drop in your AWS billing export and we scan it immediately.', icon: 'M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3' },
+  { num: '03', title: 'Get your full report', desc: 'Findings with dollar amounts and resource IDs, shown on this page and emailed to you. No account required.', icon: 'M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75' },
 ]
 
 export default function NsHealthCheck() {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const productParam = searchParams.get('product') || 'health-check'
+  const product = PRODUCT_META[productParam] ? productParam : 'health-check'
+  const meta = PRODUCT_META[product]
+
+  // capture flow state: idle (show checkout) | capturing | paid (show uploader) | error (cancelled/failed)
+  const [captureState, setCaptureState] = useState('idle')
+  const [captureError, setCaptureError] = useState('')
+  const [paidToken, setPaidToken] = useState(null)
+  const [paidEmail, setPaidEmail] = useState('')
+
   useEffect(() => {
-    document.title = 'AWS Bill Health Check - $49 · CloudBudgetMaster'
+    document.title = `${meta.name} - ${meta.price} · CloudBudgetMaster`
+  }, [meta])
+
+  // On return from PayPal: /health-check?product=X&paid=1&token=<order_id>&PayerID=...
+  useEffect(() => {
+    const paid = searchParams.get('paid')
+    const orderId = searchParams.get('token')
+    const cancelled = searchParams.get('cancelled')
+
+    if (cancelled) {
+      setCaptureState('error')
+      setCaptureError('Payment was cancelled. You have not been charged.')
+      setSearchParams({ product }, { replace: true })
+      return
+    }
+
+    if (paid === '1' && orderId) {
+      setCaptureState('capturing')
+      api.post('/bill-audit/capture', { order_id: orderId })
+        .then((res) => {
+          setPaidToken(res.data.token)
+          setPaidEmail(res.data.email || '')
+          setCaptureState('paid')
+        })
+        .catch((err) => {
+          const detail = err.response?.data?.detail
+          setCaptureError(typeof detail === 'string' ? detail : 'We could not confirm this payment. If you were charged, contact support and we will sort it out.')
+          setCaptureState('error')
+        })
+        .finally(() => {
+          setSearchParams({ product }, { replace: true })
+        })
+    }
   }, [])
 
   return (
@@ -24,7 +76,7 @@ export default function NsHealthCheck() {
       <section className="px-6 pb-2 pt-14">
         <div className="mx-auto max-w-[760px] text-center">
           <p className="mb-3.5 text-[12px] font-bold uppercase tracking-[0.08em]" style={{ color: 'var(--cbm-accent-text)' }}>
-            AWS bill health check &middot; $49 one-time
+            {meta.name} &middot; {meta.price} one-time
           </p>
           <h1 className="m-0 text-[38px] font-extrabold leading-[1.18] tracking-[-0.01em]" style={{ color: 'var(--cbm-fg)' }}>
             The alarm never fired.<br />This is what it missed.
@@ -38,7 +90,7 @@ export default function NsHealthCheck() {
               className="rounded-[10px] px-[26px] py-[13px] text-[14px] font-bold"
               style={{ background: 'var(--cbm-primary)', color: 'var(--cbm-primary-text)', boxShadow: 'var(--cbm-glow)' }}
             >
-              Buy for $49
+              Buy for {meta.price}
             </a>
             <a
               href="#sample"
@@ -96,7 +148,7 @@ export default function NsHealthCheck() {
                     className="rounded-[10px] border px-[18px] py-2.5 text-[13px] font-bold"
                     style={{ background: 'var(--cbm-surface)', borderColor: 'var(--cbm-border-strong)', color: 'var(--cbm-fg)', boxShadow: 'var(--cbm-shadow-md)' }}
                   >
-                    Unlock the full report for $49
+                    Unlock the full report for {meta.price}
                   </a>
                 </div>
               </div>
@@ -160,30 +212,70 @@ export default function NsHealthCheck() {
         </div>
       </section>
 
-      {/* CHECKOUT (honest: notify-me, not a fake charge — real Stripe lands later) */}
+      {/* CHECKOUT / CAPTURE / UPLOAD (real PayPal purchase flow) */}
       <section id="checkout" className="px-6 py-16">
         <div className="mx-auto max-w-[440px]">
-          <div className="rounded-2xl border p-7" style={{ borderColor: 'var(--cbm-border)', background: 'var(--cbm-surface)', boxShadow: 'var(--cbm-shadow-lg)' }}>
-            <div className="mb-5 flex items-center justify-between">
-              <h3 className="m-0 text-[16px] font-bold" style={{ color: 'var(--cbm-fg)' }}>AWS bill health check</h3>
-              <span className="font-mono text-[20px] font-extrabold" style={{ color: 'var(--cbm-fg)' }}>$49</span>
+          {captureState === 'idle' && (
+            <>
+              <div className="rounded-2xl border p-7" style={{ borderColor: 'var(--cbm-border)', background: 'var(--cbm-surface)', boxShadow: 'var(--cbm-shadow-lg)' }}>
+                <div className="mb-5 flex items-center justify-between">
+                  <h3 className="m-0 text-[16px] font-bold" style={{ color: 'var(--cbm-fg)' }}>{meta.name}</h3>
+                  <span className="font-mono text-[20px] font-extrabold" style={{ color: 'var(--cbm-fg)' }}>{meta.price}</span>
+                </div>
+
+                <p className="mb-4 text-[12.5px] leading-relaxed" style={{ color: 'var(--cbm-fg-3)' }}>
+                  Enter your email and continue to PayPal to pay {meta.price} one-time. After payment you come straight back here to upload your CSV and get your report, no password, no dashboard, no account created.
+                </p>
+                <PaidCheckoutForm
+                  product={product}
+                  price={meta.price}
+                  buttonClassName="flex w-full items-center justify-center gap-2 rounded-[10px] px-3 py-[13px] text-[14px] font-bold cursor-pointer"
+                  buttonStyle={{ background: 'var(--cbm-primary)', color: 'var(--cbm-primary-text)', boxShadow: 'var(--cbm-glow)' }}
+                />
+              </div>
+
+              <div className="mt-8 text-center">
+                <p className="text-[13px]" style={{ color: 'var(--cbm-fg-3)' }}>
+                  Not ready to pay? Run the free check below and get real findings right now.
+                </p>
+              </div>
+            </>
+          )}
+
+          {captureState === 'capturing' && (
+            <div className="rounded-2xl border p-8 text-center" style={{ borderColor: 'var(--cbm-border)', background: 'var(--cbm-surface)', boxShadow: 'var(--cbm-shadow-lg)' }}>
+              <div
+                className="mx-auto mb-3.5 h-8 w-8 rounded-full border-[3px]"
+                style={{ borderColor: 'var(--cbm-border)', borderTopColor: 'var(--cbm-primary)', animation: 'cbm-spin 0.8s linear infinite' }}
+              />
+              <p className="text-[13.5px]" style={{ color: 'var(--cbm-fg-2)' }}>Confirming your payment with PayPal&hellip;</p>
             </div>
+          )}
 
-            <p className="mb-4 text-[12.5px] leading-relaxed" style={{ color: 'var(--cbm-fg-3)' }}>
-              Paid checkout for this report is not open yet. Leave your email and we will notify you the moment it ships, no password, no dashboard, no account created.
-            </p>
-            <NotifyMeForm
-              productName="the AWS bill health check"
-              buttonClassName="flex w-full items-center justify-center gap-2 rounded-[10px] px-3 py-[13px] text-[14px] font-bold cursor-pointer"
-              buttonStyle={{ background: 'var(--cbm-primary)', color: 'var(--cbm-primary-text)', boxShadow: 'var(--cbm-glow)' }}
-            />
-          </div>
+          {captureState === 'error' && (
+            <div className="rounded-2xl border p-7 text-center" style={{ borderColor: 'var(--cbm-waste-border, var(--cbm-waste))', background: 'var(--cbm-waste-tint)' }}>
+              <p className="text-[13.5px] font-semibold" style={{ color: 'var(--cbm-waste)' }}>{captureError}</p>
+              <button
+                onClick={() => { setCaptureState('idle'); setCaptureError('') }}
+                className="mt-4 rounded-[10px] border px-4 py-2 text-[13px] font-semibold"
+                style={{ borderColor: 'var(--cbm-border-strong)', color: 'var(--cbm-fg)' }}
+              >
+                Back to checkout
+              </button>
+            </div>
+          )}
 
-          <div className="mt-8 text-center">
-            <p className="text-[13px]" style={{ color: 'var(--cbm-fg-3)' }}>
-              Do not want to wait? Run the free check below and get real findings right now.
-            </p>
-          </div>
+          {captureState === 'paid' && (
+            <div className="rounded-2xl border p-7" style={{ borderColor: 'var(--cbm-positive-border)', background: 'var(--cbm-surface)', boxShadow: 'var(--cbm-shadow-lg)' }}>
+              <div className="mb-5 flex items-center gap-2.5">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cbm-positive)" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h3 className="m-0 text-[16px] font-bold" style={{ color: 'var(--cbm-fg)' }}>Payment confirmed. Upload your CSV.</h3>
+              </div>
+              <PaidReportUploader token={paidToken} email={paidEmail} />
+            </div>
+          )}
         </div>
       </section>
 

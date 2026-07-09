@@ -49,10 +49,10 @@ const SAMPLE_FINDINGS = [
 const PRODUCTS = [
   { name: 'Free bill check', desc: 'A quick, in-browser health summary of your CSV.', price: '$0', tag: 'Free', free: true, href: '/#free' },
   { name: 'AWS bill health check', desc: 'The full read: waste, idle spend, hidden fees.', price: '$49', tag: 'One-time', href: '/health-check' },
-  { name: 'AI / GPU cost audit', desc: 'Bedrock, SageMaker & GPU spend, explained.', price: '$79', tag: 'One-time', href: '/products' },
-  { name: 'MSP white-label report', desc: 'Branded client reports, delivered same day.', price: '$149', tag: 'One-time', href: '/products' },
+  { name: 'AI / GPU cost audit', desc: 'Bedrock, SageMaker & GPU spend, explained.', price: '$79', tag: 'One-time', href: '/health-check?product=ai-audit' },
+  { name: 'MSP white-label report', desc: 'Branded client reports, delivered same day.', price: '$149', tag: 'One-time', href: '/health-check?product=msp' },
   { name: 'RI / Savings Plan analysis', desc: 'Coverage gaps and commitment sizing.', price: '$99', tag: 'Waitlist', href: '/products' },
-  { name: 'Networking cost teardown', desc: 'NAT, egress, cross-AZ and IPv4 rent detail.', price: '$39', tag: 'One-time', href: '/products' },
+  { name: 'Networking cost teardown', desc: 'NAT, egress, cross-AZ and IPv4 rent detail.', price: '$39', tag: 'One-time', href: '/health-check?product=networking' },
 ]
 
 const STEPS = [

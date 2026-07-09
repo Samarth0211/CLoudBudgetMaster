@@ -202,6 +202,54 @@ def send_new_signup_notification(name: str, email: str) -> bool:
     return _send_email(to, f"New CloudBudgetMaster signup: {email}", _base_template(content))
 
 
+def send_bill_audit_report_email(to_email: str, product_label: str, report_html: str) -> bool:
+    """Email a purchased bill-audit report as an inline HTML attachment.
+
+    `report_html` is the full self-contained HTML document from
+    `backend.services.bill_audit.report.render_html_report` — sent as a
+    proper attachment (not inlined into the wrapper template) so the report's
+    own styling renders correctly for the recipient, alongside a short
+    notification email.
+    """
+    settings = get_settings()
+    if not settings.smtp_host or not settings.smtp_user:
+        print("[Email] SMTP not configured, skipping")
+        return False
+
+    content = f"""
+    <h2 style="color:#ffffff;font-size:18px;margin:0 0 8px 0;">Your {product_label} report is ready</h2>
+    <p style="color:#94a3b8;font-size:14px;margin:0 0 16px 0;">
+      Thanks for your purchase. Your full report is attached to this email as an HTML file —
+      open it in any browser to view or print/save as PDF.
+    </p>
+    <p style="color:#64748b;font-size:12px;margin:0;">
+      Questions about your report? Just reply to this email.
+    </p>
+    """
+    msg = MIMEMultipart("mixed")
+    msg["From"] = f"CloudBudgetMaster <{settings.smtp_from_email or settings.smtp_user}>"
+    msg["To"] = to_email
+    msg["Subject"] = f"Your {product_label} report is ready"
+
+    body_alt = MIMEMultipart("alternative")
+    body_alt.attach(MIMEText(_base_template(content), "html"))
+    msg.attach(body_alt)
+
+    attachment = MIMEText(report_html, "html")
+    attachment.add_header("Content-Disposition", "attachment", filename="bill-audit-report.html")
+    msg.attach(attachment)
+
+    try:
+        context = ssl.create_default_context()
+        with smtplib.SMTP_SSL(settings.smtp_host, settings.smtp_port, context=context) as server:
+            server.login(settings.smtp_user, settings.smtp_password)
+            server.sendmail(settings.smtp_user, to_email, msg.as_string())
+        return True
+    except Exception as e:
+        print(f"[Email] Failed: {e}")
+        return False
+
+
 def _friendly_rule_type(rule_type: str) -> str:
     return {
         "daily_cost_above": "Daily Cost Exceeded",

@@ -22,7 +22,7 @@ const PLANS = [
     name: 'AI / GPU cost audit',
     tagline: 'Isolate Bedrock, SageMaker and GPU instance spend line by line.',
     price: '$79',
-    notify: true,
+    href: '/health-check?product=ai-audit',
     features: [
       'Bedrock & SageMaker invocation cost trace',
       'GPU instance utilization vs. spend',
@@ -34,7 +34,7 @@ const PLANS = [
     name: 'MSP white-label report',
     tagline: 'Branded reports you can send straight to clients.',
     price: '$149',
-    notify: true,
+    href: '/health-check?product=msp',
     features: [
       'Your logo and colors on the report',
       'Batch process multiple client CSVs',
@@ -58,7 +58,7 @@ const PLANS = [
     name: 'Networking cost teardown',
     tagline: 'NAT, egress, cross-AZ and IPv4 rent, broken down by resource.',
     price: '$39',
-    notify: true,
+    href: '/health-check?product=networking',
     features: [
       'NAT Gateway processing fee breakdown',
       'Cross-AZ & inter-region transfer map',
@@ -143,12 +143,6 @@ export default function NsProducts() {
                   productName={pl.name}
                   buttonClassName="rounded-[10px] border px-2.5 py-2.5 text-[13px] font-bold cursor-pointer"
                   buttonStyle={{ borderColor: 'var(--cbm-border-strong)', background: 'transparent', color: 'var(--cbm-fg)' }}
-                />
-              ) : pl.notify ? (
-                <NotifyMeForm
-                  productName={pl.name}
-                  buttonClassName="rounded-[10px] border px-2.5 py-2.5 text-[13px] font-bold cursor-pointer"
-                  buttonStyle={buyButtonStyle(pl.featured)}
                 />
               ) : (
                 <Link
