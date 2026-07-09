@@ -97,7 +97,7 @@ def _extract_faq(content: str) -> list:
 def _head(*, title, description, canonical, image, keywords="", og_type="website",
           published=None, category="", jsonld=None) -> str:
     s = get_settings()
-    img = image or f"{s.site_url}/logo.png"
+    img = image or f"{s.site_url}/logo-mark.png"
     extra = ""
     if og_type == "article" and published:
         extra += f'\n  <meta property="article:published_time" content="{_e(_iso(published))}" />'
@@ -120,7 +120,7 @@ def _head(*, title, description, canonical, image, keywords="", og_type="website
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <link rel="canonical" href="{_e(canonical)}" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
-  <meta name="theme-color" content="#f4f6fb" />
+  <meta name="theme-color" content="#0B0F1A" />
   <meta property="og:site_name" content="CloudBudgetMaster" />
   <meta property="og:type" content="{og_type}" />
   <meta property="og:title" content="{_e(title)}" />
@@ -138,57 +138,60 @@ def _head(*, title, description, canonical, image, keywords="", og_type="website
 </head>"""
 
 
+# Dark theme, hand-mirrored from the SPA's --cbm-* tokens (frontend/src/index.css)
+# and the NsNav/NsFooter components. Self-contained inline CSS — no external app
+# bundle, this is served straight from nginx to crawlers and direct/refresh hits.
 _CSS = """
-*{box-sizing:border-box}body{margin:0;background:#f4f6fb;color:#334155;font-family:Inter,system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}body{margin:0;background:#0B0F1A;color:#cbd5e1;font-family:Inter,system-ui,sans-serif;line-height:1.7;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}.wrap{max-width:760px;margin:0 auto;padding:0 24px}
-header.site{border-bottom:1px solid #e7ebf1;background:rgba(255,255,255,.85);position:sticky;top:0;backdrop-filter:blur(10px);z-index:10}
-header.site .row{max-width:1040px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#0f172a}.brand img{width:28px;height:28px;border-radius:7px}
-nav.top a{color:#475569;font-size:14px;margin-left:20px}nav.top a:hover{color:#0f172a}
-.btn{background:#FF9900;color:#1a1205!important;font-weight:600;padding:8px 16px;border-radius:9px;font-size:14px}.btn:hover{filter:brightness(1.05)}
-.cat{display:inline-block;border:1px solid #FF990033;background:#FF990014;color:#b4530a;font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
-h1{color:#0f172a;font-size:34px;line-height:1.2;margin:18px 0 10px;font-weight:800;letter-spacing:-0.02em}
-h2{color:#0f172a;font-size:24px;margin:34px 0 12px;font-weight:700;letter-spacing:-0.01em}h3{color:#0f172a;font-size:19px;margin:26px 0 8px}
-article p{color:#334155;margin:14px 0}article ul,article ol{color:#334155;padding-left:22px}article li{margin:6px 0}
-article a{color:#b4530a;text-decoration:underline}article img{max-width:100%;border-radius:12px;margin:18px 0}
-article code{background:#eef1f6;color:#b4530a;padding:2px 6px;border-radius:5px;font-family:'JetBrains Mono',monospace;font-size:.88em}
-article pre{background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:16px;overflow-x:auto}
+header.site{border-bottom:1px solid rgba(255,255,255,.10);background:rgba(11,15,26,.85);position:sticky;top:0;backdrop-filter:blur(10px);z-index:10}
+header.site .row{max-width:1200px;margin:0 auto;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;color:#fff;font-size:16px;letter-spacing:-0.01em}.brand img{width:28px;height:28px;border-radius:7px}
+nav.top a{color:#94a3b8;font-size:13px;margin-left:22px}nav.top a:hover{color:#fff}
+.btn{background:#f59e0b;color:#0B0F1A!important;font-weight:700;padding:9px 18px;border-radius:11px;font-size:13px;box-shadow:0 8px 24px rgba(245,158,11,.20)}.btn:hover{background:#fbbf24}
+.cat{display:inline-block;border:1px solid rgba(245,158,11,.30);background:rgba(245,158,11,.10);color:#fbbf24;font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;text-transform:uppercase;letter-spacing:.04em}
+h1{color:#fff;font-size:34px;line-height:1.2;margin:18px 0 10px;font-weight:800;letter-spacing:-0.02em}
+h2{color:#fff;font-size:24px;margin:34px 0 12px;font-weight:700;letter-spacing:-0.01em}h3{color:#fff;font-size:19px;margin:26px 0 8px}
+article p{color:#cbd5e1;margin:14px 0}article ul,article ol{color:#cbd5e1;padding-left:22px}article li{margin:6px 0}
+article a{color:#fbbf24;text-decoration:underline}article img{max-width:100%;border-radius:12px;margin:18px 0}
+article code{background:rgba(255,255,255,.06);color:#fbbf24;padding:2px 6px;border-radius:5px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.88em}
+article pre{background:#111827;border:1px solid rgba(255,255,255,.10);border-radius:12px;padding:16px;overflow-x:auto}
 article pre code{background:none;color:#e2e8f0;padding:0}
-article blockquote{border-left:3px solid #FF9900;margin:18px 0;padding:4px 0 4px 18px;color:#64748b}
-article table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}article th,article td{border:1px solid #e2e8f0;padding:8px 12px;text-align:left}article th{background:#f1f5f9;color:#0f172a}
-.meta{color:#64748b;font-size:13px;margin:6px 0 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+article blockquote{border-left:3px solid #f59e0b;margin:18px 0;padding:4px 0 4px 18px;color:#94a3b8}
+article table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}article th,article td{border:1px solid rgba(255,255,255,.10);padding:8px 12px;text-align:left}article th{background:rgba(255,255,255,.05);color:#fff}
+.meta{color:#94a3b8;font-size:13px;margin:6px 0 22px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .cover{width:100%;border-radius:14px;margin:8px 0 6px}
-.cta{margin:48px 0 16px;border:1px solid #e7ebf1;background:#fff;border-radius:16px;padding:28px;text-align:center;box-shadow:0 1px 3px rgba(15,23,42,.04)}
-.cta h3{margin:0 0 6px;color:#0f172a}.cta p{color:#64748b;margin:0 0 16px}
-footer.site{border-top:1px solid #e7ebf1;margin-top:48px;color:#64748b;font-size:13px}
-footer.site .row{max-width:1040px;margin:0 auto;padding:22px 24px;display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between}
-footer.site a{color:#475569}footer.site a:hover{color:#0f172a}
-.card{display:block;border:1px solid #e7ebf1;background:#fff;border-radius:14px;padding:20px;margin:14px 0;transition:border-color .15s,box-shadow .15s;box-shadow:0 1px 2px rgba(15,23,42,.03)}
-.card:hover{border-color:#cbd5e1;box-shadow:0 4px 14px rgba(15,23,42,.06)}.card h2{font-size:19px;margin:8px 0 6px;color:#0f172a}.card p{color:#64748b;margin:0;font-size:14px}
-.lede{color:#64748b;font-size:16px;margin:6px 0 28px}
+.cta{margin:48px 0 16px;border:1px solid rgba(255,255,255,.10);background:#111827;border-radius:16px;padding:28px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.cta h3{margin:0 0 6px;color:#fff}.cta p{color:#94a3b8;margin:0 0 16px}
+footer.site{border-top:1px solid rgba(255,255,255,.10);margin-top:48px;color:#64748b;font-size:13px;background:#0D1117}
+footer.site .row{max-width:1200px;margin:0 auto;padding:26px 24px;display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between;align-items:center}
+footer.site a{color:#94a3b8}footer.site a:hover{color:#fff}
+.card{display:block;border:1px solid rgba(255,255,255,.10);background:#111827;border-radius:14px;padding:20px;margin:14px 0;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:rgba(255,255,255,.20);box-shadow:0 4px 14px rgba(0,0,0,.25)}.card h2{font-size:19px;margin:8px 0 6px;color:#fff}.card p{color:#94a3b8;margin:0;font-size:14px}
+.lede{color:#94a3b8;font-size:16px;margin:6px 0 28px}
 """
 
 
 def _header() -> str:
     return """<header class="site"><div class="row">
-  <a class="brand" href="/"><img src="/logo.png" alt="CloudBudgetMaster" />CloudBudgetMaster</a>
-  <nav class="top"><a href="/">Home</a><a href="/blog">Blog</a><a href="/pricing">Pricing</a><a class="btn" href="/register">Start Free</a></nav>
+  <a class="brand" href="/"><img src="/logo-mark.png" alt="CloudBudgetMaster" />CloudBudgetMaster</a>
+  <nav class="top"><a href="/">Home</a><a href="/products">Products</a><a href="/blog">Blog</a><a class="btn" href="/">Run a free check</a></nav>
 </div></header>"""
 
 
 def _footer() -> str:
     y = datetime.now(timezone.utc).year
     return f"""<footer class="site"><div class="row">
-  <span>&copy; {y} CloudBudgetMaster. Multi-cloud cost monitoring.</span>
-  <span><a href="/about">About</a> &nbsp; <a href="/pricing">Pricing</a> &nbsp; <a href="/privacy">Privacy</a> &nbsp; <a href="/terms">Terms</a> &nbsp; <a href="/contact">Contact</a></span>
+  <span>&copy; {y} CloudBudgetMaster. AWS today; GCP, Azure &amp; Snowflake coming soon. Read-only, we never touch your infrastructure.</span>
+  <span><a href="/products">Products</a> &nbsp; <a href="/blog">Blog</a> &nbsp; <a href="/privacy">Privacy</a> &nbsp; <a href="/terms">Terms</a></span>
 </div></footer>"""
 
 
 def _cta() -> str:
     return """<div class="cta">
-  <h3>Stop guessing where your cloud money goes</h3>
-  <p>CloudBudgetMaster scans AWS, GCP &amp; Azure and finds idle, unused, and overspending resources automatically.</p>
-  <a class="btn" href="/register">Try Free — No Credit Card</a>
+  <h3>Stop guessing where your AWS bill comes from</h3>
+  <p>Upload a CSV, no signup. CloudBudgetMaster finds idle, unused, and overspending AWS resources automatically. GCP and Azure coming soon.</p>
+  <a class="btn" href="/">Run a free check</a>
 </div>"""
 
 
@@ -199,7 +202,7 @@ def render_post_html(post: dict) -> str:
     canonical = f"{s.site_url}/blog/{slug}"
     title_tag = f'{post["title"]} | CloudBudgetMaster'
     desc = post.get("meta_description") or post.get("excerpt") or post["title"]
-    image = post.get("cover_image") or f"{s.site_url}/logo.png"
+    image = post.get("cover_image") or f"{s.site_url}/logo-mark.png"
     body_html = md.markdown(post.get("content") or "", extensions=["fenced_code", "tables", "sane_lists"])
     jsonld = {
         "@context": "https://schema.org",
@@ -266,7 +269,7 @@ def render_index_html(posts: list) -> str:
       <p>{_e(p.get('excerpt') or p.get('meta_description') or '')}</p>
       <p style="color:#64748b;margin-top:10px;font-size:12px">{_e(_human_date(p.get('published_at') or p.get('created_at')))} &middot; {_e(reading_time(p.get('content','')))}</p>
     </a>""")
-    body_list = "\n".join(cards) or '<p class="lede">New articles are on the way — check back soon.</p>'
+    body_list = "\n".join(cards) or '<p class="lede">New articles are on the way. Check back soon.</p>'
     jsonld = {
         "@context": "https://schema.org", "@type": "Blog", "name": "CloudBudgetMaster Blog",
         "url": canonical, "description": "Practical guides on cloud cost optimization and FinOps.",
@@ -275,7 +278,7 @@ def render_index_html(posts: list) -> str:
     }
     head = _head(title="Cloud Cost Optimization Blog | CloudBudgetMaster",
                  description="Practical, actionable guides on cutting AWS, GCP and Azure costs — FinOps, waste detection, rightsizing, and cloud savings strategy.",
-                 canonical=canonical, image=f"{s.site_url}/logo.png",
+                 canonical=canonical, image=f"{s.site_url}/logo-mark.png",
                  keywords="cloud cost optimization, FinOps, AWS cost savings, GCP cost, Azure cost, cloud waste",
                  jsonld=jsonld)
     return f"""{head}
@@ -283,7 +286,7 @@ def render_index_html(posts: list) -> str:
 {_header()}
 <main class="wrap">
   <h1 style="margin-top:36px">Cloud Cost Optimization Blog</h1>
-  <p class="lede">Practical, no-fluff guides on cutting your AWS, GCP and Azure bill — FinOps, waste detection, rightsizing, and real savings strategy.</p>
+  <p class="lede">Practical, no-fluff guides on cutting your AWS bill. FinOps, waste detection, and real savings. (GCP and Azure guides coming soon.)</p>
   {body_list}
   {_cta()}
 </main>
