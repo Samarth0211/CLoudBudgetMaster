@@ -122,6 +122,38 @@ def claim_token(token: str) -> bool:
     return claimed
 
 
+def captured_orders() -> list[dict]:
+    """All orders with status='captured' (real, PayPal-confirmed sales) — used by
+    the founder ops-metrics endpoint (api/ops.py). Never includes 'created'
+    (abandoned checkout) rows.
+    """
+    conn = _conn()
+    rows = conn.execute(
+        "SELECT order_id, email, product, amount, currency, captured_at FROM bill_audit_orders WHERE status='captured'"
+    ).fetchall()
+    conn.close()
+    return [dict(zip(["order_id", "email", "product", "amount", "currency", "captured_at"], r)) for r in rows]
+
+
+def revenue_by_product() -> dict[str, dict]:
+    """Sum captured-order amounts grouped by product key, e.g. {'health-check': {'orders': 3, 'revenue_usd': 147.0}}.
+
+    Uses the actual stored `amount` per order (real charged value), not a
+    hardcoded price — so this stays correct even if PRODUCTS pricing changes
+    over time and old orders were captured at a different price.
+    """
+    out: dict[str, dict] = {}
+    for o in captured_orders():
+        key = o["product"]
+        bucket = out.setdefault(key, {"orders": 0, "revenue_usd": 0.0})
+        bucket["orders"] += 1
+        try:
+            bucket["revenue_usd"] += float(o["amount"])
+        except (TypeError, ValueError):
+            pass
+    return out
+
+
 def release_token(token: str) -> None:
     """Undo a claim when report generation fails on bad input (parse/analyze
     error), so the buyer can retry with a corrected CSV without losing their

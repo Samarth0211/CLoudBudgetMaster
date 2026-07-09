@@ -61,3 +61,16 @@ def mark_captured(order_id: str) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def count_captured_plan(plan: str) -> int:
+    """Count captured orders for a given plan (e.g. 'pro') — used by the founder
+    ops-metrics endpoint (api/ops.py) to estimate subscription revenue.
+    """
+    conn = _conn()
+    row = conn.execute(
+        "SELECT COUNT(*) FROM payment_orders WHERE status='captured' AND plan=?",
+        (plan,),
+    ).fetchone()
+    conn.close()
+    return row[0] if row else 0

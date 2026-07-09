@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
     environment: str = "development"
 
+    # Ops metrics (no-login, token-gated founder dashboard — see api/ops.py)
+    admin_token: str = ""  # secret query-param token; unset => endpoint denies all access
+
     # Blog / SEO
     admin_emails: str = ""  # comma-separated emails allowed to manage blog posts
     site_url: str = "https://cloudbudgetmaster.com"  # canonical public origin (no trailing slash)
