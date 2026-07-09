@@ -5,6 +5,9 @@ import { ConnectionFilterProvider } from './hooks/useConnectionFilter'
 import Sidebar from './components/layout/Sidebar'
 import Navbar from './components/layout/Navbar'
 import LandingPage from './pages/LandingPage'
+import NsHome from './pages/NsHome'
+import NsProducts from './pages/NsProducts'
+import NsHealthCheck from './pages/NsHealthCheck'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
@@ -66,7 +69,14 @@ function AppLayout({ children }) {
 export default function App() {
   return (
     <Routes>
-      <Route path="/" element={<PublicRoute><LandingPage /></PublicRoute>} />
+      {/* No-signup AWS bill-audit pivot: new public homepage + product pages
+          (Fable design handoff). Not gated by PublicRoute -- these are
+          marketing pages, not the auth landing, so a logged-in user browsing
+          / or /products should still see them, not get bounced to /dashboard. */}
+      <Route path="/" element={<NsHome />} />
+      <Route path="/products" element={<NsProducts />} />
+      <Route path="/health-check" element={<NsHealthCheck />} />
+      <Route path="/landing-legacy" element={<PublicRoute><LandingPage /></PublicRoute>} />
       <Route path="/login" element={<PublicRoute><NoIndex /><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><NoIndex /><Register /></PublicRoute>} />
       <Route path="/dashboard" element={

@@ -162,3 +162,13 @@ ON CONFLICT (code) DO UPDATE SET valid_until = EXCLUDED.valid_until, active = TR
 
 -- Blog view tracking (public post-view counter, surfaced in the admin list).
 ALTER TABLE blog_posts ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0;
+
+-- Public waitlist/notify captures (landing "Notify me", RI/SP waitlist). No auth,
+-- no user_id — these are pre-signup leads, not tied to a profile.
+CREATE TABLE IF NOT EXISTS waitlist (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL,
+  product TEXT DEFAULT '',
+  source TEXT DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);

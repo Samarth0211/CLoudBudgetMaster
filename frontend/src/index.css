@@ -209,6 +209,54 @@ body {
 }
 
 /* ============================================================================
+   No-signup landing tokens (--cbm-*) — scoped to the new NsHome/NsProducts/
+   NsHealthCheck marketing pages (Fable design handoff). These sit alongside
+   the app-wide --canvas/--fg/etc. tokens above and follow the SAME theme
+   mechanism (the existing `theme` localStorage key + [data-theme] on <html>,
+   see hooks/useTheme.jsx) — dark values here are the :root default, the
+   light overrides live in the [data-theme="light"] block further down.
+   ============================================================================ */
+:root {
+  --cbm-canvas: #0B0F1A;
+  --cbm-surface: #111827;
+  --cbm-surface-raised: #0D1117;
+  --cbm-glass-1: rgba(255,255,255,0.03);
+  --cbm-glass-2: rgba(255,255,255,0.05);
+  --cbm-glass-3: rgba(255,255,255,0.10);
+  --cbm-border: rgba(255,255,255,0.10);
+  --cbm-border-soft: rgba(255,255,255,0.05);
+  --cbm-border-strong: rgba(255,255,255,0.20);
+  --cbm-fg: #ffffff;
+  --cbm-fg-1: #e2e8f0;
+  --cbm-fg-2: #cbd5e1;
+  --cbm-fg-3: #94a3b8;
+  --cbm-fg-4: #64748b;
+  --cbm-primary: #f59e0b;
+  --cbm-primary-hover: #fbbf24;
+  --cbm-primary-text: #0B0F1A;
+  --cbm-primary-tint: rgba(245,158,11,0.10);
+  --cbm-accent-text: #fbbf24;
+  --cbm-positive: #10b981;
+  --cbm-positive-tint: rgba(16,185,129,0.10);
+  --cbm-positive-border: rgba(16,185,129,0.25);
+  --cbm-waste: #ef4444;
+  --cbm-waste-tint: rgba(239,68,68,0.10);
+  --cbm-waste-border: rgba(239,68,68,0.22);
+  --cbm-info: #3b82f6;
+  --cbm-info-tint: rgba(59,130,246,0.10);
+  --cbm-ai: #a855f7;
+  --cbm-ai-tint: rgba(168,85,247,0.14);
+  --cbm-orphaned: #ec4899;
+  --cbm-shadow-md: 0 4px 12px rgba(0,0,0,0.25);
+  --cbm-shadow-lg: 0 10px 30px rgba(0,0,0,0.35);
+  --cbm-glow: 0 8px 24px rgba(245,158,11,0.20);
+  --cbm-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --cbm-font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+}
+
+@keyframes cbm-spin { to { transform: rotate(360deg); } }
+
+/* ============================================================================
    LIGHT THEME (default). The dark design lives in :root; this additive layer
    flips the CSS variables AND the hardcoded utility classes the dashboard uses.
    These rules are unlayered, so they reliably beat Tailwind's layered utilities.
@@ -225,6 +273,41 @@ body {
   --header-bg: rgba(255,255,255,0.85);
   --chart-track: #e2e8f0;
   color-scheme: light;
+
+  /* --cbm-* light overrides (no-signup landing pages) */
+  --cbm-canvas: #f6f7f9;
+  --cbm-surface: #ffffff;
+  --cbm-surface-raised: #ffffff;
+  --cbm-glass-1: rgba(15,23,42,0.03);
+  --cbm-glass-2: rgba(15,23,42,0.045);
+  --cbm-glass-3: rgba(15,23,42,0.08);
+  --cbm-border: rgba(15,23,42,0.10);
+  --cbm-border-soft: rgba(15,23,42,0.06);
+  --cbm-border-strong: rgba(15,23,42,0.20);
+  --cbm-fg: #0b1220;
+  --cbm-fg-1: #1e293b;
+  --cbm-fg-2: #334155;
+  --cbm-fg-3: #64748b;
+  --cbm-fg-4: #94a3b8;
+  --cbm-primary: #f59e0b;
+  --cbm-primary-hover: #d97706;
+  --cbm-primary-text: #0b1220;
+  --cbm-primary-tint: rgba(245,158,11,0.10);
+  --cbm-accent-text: #b45309;
+  --cbm-positive: #059669;
+  --cbm-positive-tint: rgba(16,185,129,0.08);
+  --cbm-positive-border: rgba(16,185,129,0.30);
+  --cbm-waste: #dc2626;
+  --cbm-waste-tint: rgba(239,68,68,0.07);
+  --cbm-waste-border: rgba(239,68,68,0.25);
+  --cbm-info: #2563eb;
+  --cbm-info-tint: rgba(59,130,246,0.08);
+  --cbm-ai: #9333ea;
+  --cbm-ai-tint: rgba(168,85,247,0.08);
+  --cbm-orphaned: #db2777;
+  --cbm-shadow-md: 0 4px 14px rgba(15,23,42,0.08);
+  --cbm-shadow-lg: 0 12px 34px rgba(15,23,42,0.12);
+  --cbm-glow: 0 8px 24px rgba(245,158,11,0.16);
 }
 [data-theme="light"] body { background: var(--canvas); color: var(--fg); }
 
